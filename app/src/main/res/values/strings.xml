@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">DynamicQRCodes</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="lorem_ipsum">
+        Lorem ipsum dolor sit amet
+    </string>
+
+
+
+    <string name="timestampFormat">xx</string>
+    <string name="defaultURLTemplate">https://charging.cloud/{evseId}/{totp}</string>
+    <string name="defaultEVSEId">DE*GEF*E12345*678*1</string>
+    <string name="defaultValidityTime">30</string>
+    <string name="defaultTOTPLength">12</string>
+    <string name="defaultAlphabet">0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+    <string name="scanQRCode">Scan QR Code</string>
+
+    <string name="remaining_time">Remaining Time: %1$d secs</string>
+
+</resources>
