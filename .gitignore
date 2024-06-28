@@ -1,54 +1,48 @@
 # from Android Studio
 *.iml
-.gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+gradle/wrapper/gradle-wrapper.jar
 .DS_Store
+build/
 /build
+*/build/
+.idea/.name
+.idea/gradle.xml
+.idea/misc.xml
+.idea/other.xml
+.idea/vcs.xml
+
+
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+
+
 
 
 
 # Gradle
 .gradle/
-build/
-*/build/
-!**/src/**/build/
-!**/src/**/build.gradle
-!**/src/**/settings.gradle
-!**/src/**/gradle-wrapper.properties
+!/src//build/
+!/src//build.gradle
+!/src//settings.gradle
+!/src//gradle-wrapper.properties
 
 # Gradle Wrapper
-gradle/wrapper/gradle-wrapper.properties
-gradle/wrapper/gradle-wrapper.jar
 
 
 # Android Studio
 *.keystore
 *.jks
-.gradle/
 local.properties
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
-/.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
-/.idea/gradle.xml
 /.idea/encodings.xml
-/.idea/vcs.xml
-.idea/misc.xml
 /.idea/dictionaries
-.DS_Store
-*/build/
 */intermediates/
 */local.properties
 */out/
@@ -66,16 +60,13 @@ local.properties
 */app/build/
 */buildSrc/build/
 */.settings/
-.idea/misc.xml
 .idea/caches/
 .idea/libraries/
 .idea/modules.xml
 .idea/workspace.xml
 .idea/navEditor.xml
 .idea/assetWizardSettings.xml
-.idea/gradle.xml
 .idea/encodings.xml
-.idea/vcs.xml
 .idea/modules/
 .idea/tasks/
 .idea/scopes/
@@ -85,13 +76,6 @@ local.properties
 .idea/artifacts/
 .idea/conversion.xml
 .idea/copyright/
-.idea/vcs.xml
-.idea/misc.xml
-.idea/caches/
 .idea/lookup.xml
 .idea/codestyles/
 .idea/jsLibraryMappings.xml
-.idea/libraries/
-.idea/modules.xml
-.idea/vcs.xml
-.idea/workspace.xml
