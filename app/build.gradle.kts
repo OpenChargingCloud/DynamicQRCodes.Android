@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "cloud.charging.open.dynamicqrcodes"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "cloud.charging.open.dynamicqrcodes"
-        minSdk = 29
+        minSdk = 31
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -27,14 +27,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         viewBinding = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
@@ -53,6 +56,6 @@ dependencies {
     // https://github.com/journeyapps/zxing-android-embedded
     // https://mvnrepository.com/artifact/com.journeyapps/zxing-android-embedded/4.3.0
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.google.zxing:core:3.5.4")
 
 }
