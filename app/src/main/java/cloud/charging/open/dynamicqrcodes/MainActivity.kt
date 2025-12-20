@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.OnBackPressedCallback
 //import androidx.navigation.ui.AppBarConfiguration
 import cloud.charging.open.dynamicqrcodes.databinding.ActivityMainBinding
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -202,6 +203,15 @@ class MainActivity : AppCompatActivity() {
             barcodeLauncher.launch(options)
         }
 
+        // Handle predictive back gesture
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Back navigation logic here
+                // If you don't need custom behavior, just call remove() to let the system handle it
+                // remove()
+                finish()
+            }
+        })
     }
 
     private fun generateRandomString(length: Int): String {

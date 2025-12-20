@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "cloud.charging.open.dynamicqrcodes"
         minSdk = 31
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 2
         versionName = "1.1"
 
