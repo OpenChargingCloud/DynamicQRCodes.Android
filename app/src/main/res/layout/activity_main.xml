@@ -229,13 +229,16 @@
                 app:iconGravity="textStart" />
 
 
-            <!-- Which build is running on this device, filled in by MainActivity -->
+            <!-- Which build is running on this device, filled in by MainActivity.
+                 Deliberately below the readable-body-text size: this is a
+                 de-emphasised diagnostic label, and a long press copies it. -->
             <TextView
                 android:id="@+id/buildInfo"
+                tools:ignore="SmallSp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textSize="11sp"
+                android:layout_marginTop="32dp"
+                android:textSize="10sp"
                 android:alpha="0.6"
                 android:textAlignment="center"
                 tools:text="1.3 (4) · 5a61d10 · installed 2026-08-23 07:55" />

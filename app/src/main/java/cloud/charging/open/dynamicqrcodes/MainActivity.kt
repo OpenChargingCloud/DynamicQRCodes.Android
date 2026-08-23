@@ -1,6 +1,8 @@
 package cloud.charging.open.dynamicqrcodes
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -187,6 +189,21 @@ class MainActivity : AppCompatActivity() {
                                            BuildConfig.VERSION_CODE,
                                            BuildConfig.GIT_REVISION,
                                            buildInfoFormat.format(Date(packageInfo.lastUpdateTime)))
+
+        binding.buildInfo.setOnLongClickListener {
+
+            getSystemService(ClipboardManager::class.java)
+                .setPrimaryClip(ClipData.newPlainText(getString(R.string.app_name),
+                                                      binding.buildInfo.text))
+
+            // Android 13 and up confirm a copy themselves, so a toast on top
+            // of that would only be saying it twice.
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+                Toast.makeText(this, R.string.buildInfoCopied, Toast.LENGTH_SHORT).show()
+
+            true
+
+        }
 
     }
 
