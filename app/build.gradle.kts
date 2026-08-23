@@ -1,6 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+}
+
+// Signing credentials live outside the repository. Copy
+// keystore.properties.example to keystore.properties and fill it in to have
+// release builds signed with the Google Play upload key. Without that file the
+// build still works, it just produces an unsigned release.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties     = Properties().apply {
+    if (keystorePropertiesFile.exists())
+        keystorePropertiesFile.inputStream().use { load(it) }
 }
 
 android {
@@ -17,8 +29,21 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile     = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias      = keystoreProperties.getProperty("keyAlias")
+                keyPassword   = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (keystorePropertiesFile.exists())
+                signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

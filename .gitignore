@@ -1,6 +1,7 @@
 # from Android Studio
 *.iml
 /local.properties
+/keystore.properties
 .DS_Store
 build/
 /build
