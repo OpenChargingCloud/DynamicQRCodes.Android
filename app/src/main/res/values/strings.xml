@@ -36,6 +36,8 @@
     <string name="scanValidPrevious">TOTP valid — previous time slot</string>
     <string name="scanValidNext">TOTP valid — next time slot</string>
     <string name="scanInvalid">TOTP invalid!</string>
+    <string name="scannedEvseId">EVSE ID: %1$s</string>
+    <string name="scannedEvseIdDiffers">EVSE ID: %1$s (differs from the configured one)</string>
     <string name="scanNoTemplateMatch">The scanned URL does not match the URL template!</string>
 
     <!-- Which build is running: version, git revision, installation time -->

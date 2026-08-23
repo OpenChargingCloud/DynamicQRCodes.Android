@@ -27,10 +27,18 @@ Leave validity time, TOTP length and alphabet at their defaults.
 | `01-valid.png` | `https://charging.cloud/DE*GEF*E12345*678*1/j0yccWm0nojS` | *TOTP valid — current time slot*, in green |
 | `02-invalid-totp.png` | `https://charging.cloud/DE*GEF*E12345*678*1/000000000000` | *TOTP invalid!*, in the error colour |
 | `03-foreign-url.png` | `https://evil.example.com/DE*GEF*E12345*678*1/j0yccWm0nojS` | *The scanned URL does not match the URL template!* |
+| `04-other-evse.png` | `https://charging.cloud/DE*GEF*E99999*111*2/j0yccWm0nojS` | *TOTP valid — current time slot*, plus *EVSE ID: … (differs from the configured one)* |
 
 The third one is the fraud OCPP 2.1 C25 exists to prevent: a sticker pasted
 over the original, pointing at somebody else's payment page. Note that it
 carries a perfectly valid TOTP - only the host differs.
+
+The fourth shows why the EVSE ID is reported but does not decide the verdict.
+The token is the same valid one as in the first code, because a TOTP does not
+depend on the EVSE ID at all; only the charging point differs. C25 makes the
+token the proof of authenticity and has the CSMS decode the URL parameters
+afterwards, so this is a valid code of another charging point - not an invalid
+one, and it is not coloured like a failure.
 
 ## Regenerating them
 

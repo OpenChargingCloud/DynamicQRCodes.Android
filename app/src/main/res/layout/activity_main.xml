@@ -204,6 +204,19 @@
                 tools:text="TOTP valid — current time slot"
                 tools:visibility="visible" />
 
+            <!-- Which EVSE the scanned code belongs to; information, not a verdict -->
+            <TextView
+                android:id="@+id/scannedEvseId"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:paddingBottom="4dp"
+                android:textSize="14sp"
+                android:textAlignment="center"
+                android:visibility="gone"
+                tools:text="EVSE ID: DE*GEF*E12345*678*2 (differs from the configured one)"
+                tools:visibility="visible" />
+
             <TextView
                 android:id="@+id/scannedURL"
                 android:layout_width="match_parent"

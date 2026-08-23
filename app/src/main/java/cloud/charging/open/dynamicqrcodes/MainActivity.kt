@@ -175,8 +175,9 @@ class MainActivity : AppCompatActivity() {
         binding.scanButton.isVisible = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
 
         binding.scanButton.setOnClickListener {
-            binding.scanResult.isVisible = false
-            binding.scannedURL.isVisible = false
+            binding.scanResult.isVisible    = false
+            binding.scannedEvseId.isVisible = false
+            binding.scannedURL.isVisible    = false
             val options = ScanOptions()
             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
             options.setPrompt(getString(R.string.scanQRCodePrompt))
@@ -331,8 +332,11 @@ class MainActivity : AppCompatActivity() {
         binding.scannedURL.text      = scannedURL
         binding.scannedURL.isVisible = true
 
-        val totp = URLTemplate.extract(binding.urlTemplate.text.toString(), scannedURL)
-                              ?.get("totp")
+        val values = URLTemplate.extract(binding.urlTemplate.text.toString(), scannedURL)
+
+        showScannedEvseId(values?.get("evseId"))
+
+        val totp = values?.get("totp")
 
         if (totp == null) {
             showScanResult(getString(R.string.scanNoTemplateMatch), false)
@@ -370,6 +374,31 @@ class MainActivity : AppCompatActivity() {
             ),
             validation.isValid
         )
+
+    }
+
+    /**
+     * Name the EVSE a scanned code belongs to, and say so when that is not the
+     * one configured here.
+     *
+     * Deliberately kept out of the verdict: OCPP 2.1 C25 makes the TOTP the
+     * proof of authenticity and has the CSMS decode the URL parameters only
+     * afterwards. A different EVSE ID therefore means a valid code of another
+     * charging point, not an invalid one - which is why this says it in words
+     * instead of colouring it like a failure.
+     */
+    private fun showScannedEvseId(evseId: String?) {
+
+        if (evseId == null) {
+            binding.scannedEvseId.isVisible = false
+            return
+        }
+
+        binding.scannedEvseId.text      = if (evseId == binding.evseId.text.toString().trim())
+                                              getString(R.string.scannedEvseId, evseId)
+                                          else
+                                              getString(R.string.scannedEvseIdDiffers, evseId)
+        binding.scannedEvseId.isVisible = true
 
     }
 
