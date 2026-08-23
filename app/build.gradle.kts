@@ -4,6 +4,23 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+// The revision a build came from, so that what runs on a device can be traced
+// back to a commit. A trailing "+" means the working tree had uncommitted
+// changes. Falls back to "unknown" outside a git checkout.
+val gitRevision: String = run {
+
+    fun git(vararg args: String) = runCatching {
+        providers.exec { commandLine("git", *args) }
+                 .standardOutput.asText.get().trim()
+    }.getOrNull()
+
+    val revision = git("rev-parse", "--short", "HEAD") ?: return@run "unknown"
+    val dirty    = git("status", "--porcelain")?.isNotBlank() == true
+
+    if (dirty) "$revision+" else revision
+
+}
+
 // Signing credentials live outside the repository. Copy
 // keystore.properties.example to keystore.properties and fill it in to have
 // release builds signed with the Google Play upload key. Without that file the
@@ -28,6 +45,8 @@ android {
         versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "GIT_REVISION", "\"$gitRevision\"")
     }
 
     signingConfigs {
@@ -59,6 +78,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

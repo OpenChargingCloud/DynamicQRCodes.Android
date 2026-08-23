@@ -38,6 +38,9 @@
     <string name="scanInvalid">TOTP invalid!</string>
     <string name="scanNoTemplateMatch">The scanned URL does not match the URL template!</string>
 
+    <!-- Which build is running: version, git revision, installation time -->
+    <string name="buildInfo">%1$s (%2$d) · %3$s · installed %4$s</string>
+
     <!-- Input errors -->
     <string name="error_invalid_timestamp">The timestamp must be formatted as yyyy-MM-dd HH:mm:ss!</string>
     <string name="error_invalid_validity_time">The validity time must be a positive integer number of seconds!</string>

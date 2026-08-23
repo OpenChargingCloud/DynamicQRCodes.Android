@@ -228,6 +228,18 @@
                 app:icon="@android:drawable/ic_menu_camera"
                 app:iconGravity="textStart" />
 
+
+            <!-- Which build is running on this device, filled in by MainActivity -->
+            <TextView
+                android:id="@+id/buildInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="11sp"
+                android:alpha="0.6"
+                android:textAlignment="center"
+                tools:text="1.3 (4) · 5a61d10 · installed 2026-08-23 07:55" />
+
         </LinearLayout>
     </ScrollView>
 

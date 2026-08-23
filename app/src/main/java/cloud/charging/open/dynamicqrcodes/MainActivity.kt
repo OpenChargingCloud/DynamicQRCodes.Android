@@ -2,6 +2,7 @@ package cloud.charging.open.dynamicqrcodes
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -40,6 +41,8 @@ class MainActivity : AppCompatActivity() {
         // Reject "2024-99-99" instead of rolling it over into a valid date.
         isLenient = false
     }
+
+    private val buildInfoFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
     private var resultColor      = 0
     private val errorColor by lazy {
@@ -147,6 +150,8 @@ class MainActivity : AppCompatActivity() {
 
         updateResultingURL()
 
+        showBuildInfo()
+
         // The camera is optional: generating URLs works without one.
         binding.scanButton.isVisible = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
 
@@ -160,6 +165,28 @@ class MainActivity : AppCompatActivity() {
             options.setBarcodeImageEnabled(true)
             barcodeLauncher.launch(options)
         }
+
+    }
+
+    /**
+     * Name the build running on this device. The version alone cannot tell a
+     * store release from a local build, so the git revision and the moment the
+     * package was installed are shown as well - the latter is what gives away
+     * an app that was never replaced by the newest build.
+     */
+    private fun showBuildInfo() {
+
+        @Suppress("DEPRECATION")
+        val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                              packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+                          else
+                              packageManager.getPackageInfo(packageName, 0)
+
+        binding.buildInfo.text = getString(R.string.buildInfo,
+                                           BuildConfig.VERSION_NAME,
+                                           BuildConfig.VERSION_CODE,
+                                           BuildConfig.GIT_REVISION,
+                                           buildInfoFormat.format(Date(packageInfo.lastUpdateTime)))
 
     }
 
