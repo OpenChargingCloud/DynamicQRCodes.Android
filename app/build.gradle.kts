@@ -47,15 +47,14 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.activity)
+
+    // https://github.com/journeyapps/zxing-android-embedded
+    implementation(libs.zxing.android.embedded)
+    implementation(libs.zxing.core)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-
-    // https://github.com/journeyapps/zxing-android-embedded
-    // https://mvnrepository.com/artifact/com.journeyapps/zxing-android-embedded/4.3.0
-    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.google.zxing:core:3.5.4")
 
 }

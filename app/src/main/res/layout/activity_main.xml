@@ -20,15 +20,16 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-
-
-    <!-- Adding a ScrollView to accommodate the input fields -->
+    <!-- The scrolling behaviour keeps this below the app bar, including the
+         status bar inset the app bar consumes. The window insets at the bottom
+         and the sides are applied as padding in MainActivity. -->
     <ScrollView
+        android:id="@+id/contentScrollView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="16dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -39,13 +40,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                android:hint="@string/timestamp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/timestamp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Timestamp"
                     android:inputType="datetime" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -59,18 +60,18 @@
                     android:id="@+id/autoUpdateLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Auto update"
+                    android:text="@string/autoUpdate"
+                    android:labelFor="@+id/autoUpdateSwitch"
                     android:layout_centerVertical="true"
                     android:layout_marginEnd="1dp"
                     android:layout_toStartOf="@+id/autoUpdateSwitch" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
+                <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/autoUpdateSwitch"
                     android:layout_width="wrap_content"
-                    android:layout_height="0pt"
-                    android:layout_marginBottom="10dp"
+                    android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"/>
+                    android:layout_centerVertical="true" />
 
             </RelativeLayout>
 
@@ -78,13 +79,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="0dp">
+                android:layout_marginTop="8dp"
+                android:hint="@string/urlTemplate">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/urlTemplate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="URL Template"
                     android:inputType="textUri" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -93,13 +94,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                android:hint="@string/evseId">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/evseId"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="EVSE ID"
                     android:inputType="text" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -108,13 +109,14 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                android:hint="@string/sharedSecret">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/sharedSecret"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Shared Secret" />
+                    android:inputType="text" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -122,13 +124,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                android:hint="@string/validityTime">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/validityTime"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Validity Time (seconds)"
                     android:inputType="number" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -137,13 +139,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                android:hint="@string/totpLength">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/totpLength"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="TOTP Length"
                     android:inputType="number" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -152,19 +154,16 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="8dp"
+                android:hint="@string/alphabet">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/alphabet"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Alphabet"
                     android:inputType="text" />
 
             </com.google.android.material.textfield.TextInputLayout>
-
-
-
 
             <!-- Resulting URL Field -->
             <TextView
@@ -173,9 +172,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:padding="8dp"
-                android:text="Resulting URL..."
+                android:text="@string/resultingURLPlaceholder"
+                android:textIsSelectable="true"
                 android:textSize="16sp"
-                android:textColor="@android:color/holo_blue_dark"
+                android:textColor="?attr/colorPrimary"
                 android:textAlignment="center" />
 
             <!-- Remaining Time Field -->
@@ -185,14 +185,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:padding="8dp"
-                android:text="remaining time..."
+                android:text="@string/remainingTimePlaceholder"
                 android:textSize="16sp"
-                android:textColor="@android:color/holo_blue_dark"
+                android:textColor="?attr/colorPrimary"
                 android:textAlignment="center" />
 
-
             <!-- Scan QR Code Button -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/scan_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

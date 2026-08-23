@@ -1,28 +1,39 @@
 <resources>
     <string name="app_name">DynamicQRCodes</string>
-    <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
 
-    <string name="lorem_ipsum">
-        Lorem ipsum dolor sit amet
-    </string>
+    <!-- Input labels -->
+    <string name="timestamp">Timestamp</string>
+    <string name="autoUpdate">Auto update</string>
+    <string name="urlTemplate">URL Template</string>
+    <string name="evseId">EVSE ID</string>
+    <string name="sharedSecret">Shared Secret</string>
+    <string name="validityTime">Validity Time (seconds)</string>
+    <string name="totpLength">TOTP Length</string>
+    <string name="alphabet">Alphabet</string>
 
-
-
-    <string name="timestampFormat">xx</string>
+    <!-- Defaults -->
     <string name="defaultURLTemplate">https://charging.cloud/{evseId}/{totp}</string>
     <string name="defaultEVSEId">DE*GEF*E12345*678*1</string>
     <string name="defaultValidityTime">30</string>
     <string name="defaultTOTPLength">12</string>
     <string name="defaultAlphabet">0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+
+    <!-- Results -->
+    <string name="resultingURLPlaceholder">Resulting URL…</string>
+    <string name="remainingTimePlaceholder">Remaining time…</string>
+    <plurals name="remaining_time">
+        <item quantity="one">Remaining Time: %1$d sec</item>
+        <item quantity="other">Remaining Time: %1$d secs</item>
+    </plurals>
+
+    <!-- QR code scanner -->
     <string name="scanQRCode">Scan QR Code</string>
+    <string name="scanQRCodePrompt">Scan a QR code</string>
+    <string name="scanCancelled">Cancelled</string>
+    <string name="scanMissingCameraPermission">Cancelled due to missing camera permission</string>
+    <string name="scanResult">Scanned: %1$s</string>
 
-    <string name="remaining_time">Remaining Time: %1$d secs</string>
-
+    <!-- Input errors -->
     <string name="error_invalid_timestamp">The timestamp must be formatted as yyyy-MM-dd HH:mm:ss!</string>
     <string name="error_invalid_validity_time">The validity time must be a positive integer number of seconds!</string>
     <string name="error_invalid_totp_length">The TOTP length must be a positive integer number!</string>

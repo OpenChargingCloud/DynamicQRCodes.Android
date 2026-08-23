@@ -1,16 +1,21 @@
 package cloud.charging.open.dynamicqrcodes
 
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import cloud.charging.open.dynamicqrcodes.databinding.ActivityMainBinding
 import com.google.android.material.color.MaterialColors
 import com.google.zxing.client.android.Intents
@@ -58,31 +63,28 @@ class MainActivity : AppCompatActivity() {
                 val originalIntent = result.originalIntent
                 if (originalIntent == null) {
                     Log.d("MainActivity", "Cancelled scan")
-                    Toast.makeText(this@MainActivity, "Cancelled", Toast.LENGTH_LONG)
+                    Toast.makeText(this, R.string.scanCancelled, Toast.LENGTH_LONG)
                         .show()
                 } else if (originalIntent.hasExtra(Intents.Scan.MISSING_CAMERA_PERMISSION)) {
-                    Log.d(
-                        "MainActivity",
-                        "Cancelled scan due to missing camera permission"
-                    )
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Cancelled due to missing camera permission",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Log.d("MainActivity", "Cancelled scan due to missing camera permission")
+                    Toast.makeText(this, R.string.scanMissingCameraPermission, Toast.LENGTH_LONG)
+                        .show()
                 }
             } else {
                 Log.d("MainActivity", "Scanned")
-                Toast.makeText(
-                    this@MainActivity,
-                    "Scanned: " + result.contents,
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, getString(R.string.scanResult, result.contents), Toast.LENGTH_LONG)
+                    .show()
             }
 
     }
 
+    // The touch listener on the timestamp field forwards to performClick, which
+    // is all TextInputEditText needs; the check only knows how to verify that
+    // on a view we subclass ourselves.
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
 
@@ -90,6 +92,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+
+        applyWindowInsets()
 
         resultColor = binding.resultingURL.currentTextColor
 
@@ -143,11 +147,13 @@ class MainActivity : AppCompatActivity() {
 
         updateResultingURL()
 
+        // The camera is optional: generating URLs works without one.
+        binding.scanButton.isVisible = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+
         binding.scanButton.setOnClickListener {
             val options = ScanOptions()
             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-            options.setPrompt("Scan a QR code")
-            options.setCameraId(0) // Use a specific camera of the device
+            options.setPrompt(getString(R.string.scanQRCodePrompt))
             options.setBeepEnabled(true)
             options.setBarcodeImageEnabled(true)
             barcodeLauncher.launch(options)
@@ -158,6 +164,38 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         handler.removeCallbacks(updateTimestampTask)
         super.onDestroy()
+    }
+
+    /**
+     * Keep the scrollable content clear of the system bars, the display cutout
+     * and the keyboard. Since targetSdk 35 the window always spans the whole
+     * screen, so nothing else keeps the scan button above the gesture bar.
+     */
+    private fun applyWindowInsets() {
+
+        val scrollView    = binding.contentScrollView
+        val paddingLeft   = scrollView.paddingLeft
+        val paddingRight  = scrollView.paddingRight
+        val paddingBottom = scrollView.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView) { view, windowInsets ->
+
+            val insets = windowInsets.getInsets(
+                             WindowInsetsCompat.Type.systemBars() or
+                             WindowInsetsCompat.Type.displayCutout() or
+                             WindowInsetsCompat.Type.ime()
+                         )
+
+            view.updatePadding(
+                left   = paddingLeft   + insets.left,
+                right  = paddingRight  + insets.right,
+                bottom = paddingBottom + insets.bottom
+            )
+
+            windowInsets
+
+        }
+
     }
 
     /**
@@ -204,12 +242,16 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        val remainingTime = totp.remainingTime.toInt()
+
         binding.resultingURL.setTextColor(resultColor)
         binding.resultingURL.text  = binding.urlTemplate.text.toString()
                                             .replace("{evseId}", binding.evseId.text.toString())
                                             .replace("{totp}",   totp.current)
 
-        binding.remainingTime.text = getString(R.string.remaining_time, totp.remainingTime.toLong())
+        binding.remainingTime.text = resources.getQuantityString(R.plurals.remaining_time,
+                                                                 remainingTime,
+                                                                 remainingTime)
 
     }
 
@@ -224,26 +266,6 @@ class MainActivity : AppCompatActivity() {
         return (1..length)
             .map { allowedChars[secureRandom.nextInt(allowedChars.length)] }
             .joinToString("")
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        return true
     }
 
 }
