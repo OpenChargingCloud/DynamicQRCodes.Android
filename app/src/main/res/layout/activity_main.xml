@@ -63,7 +63,7 @@
                     android:text="@string/autoUpdate"
                     android:labelFor="@+id/autoUpdateSwitch"
                     android:layout_centerVertical="true"
-                    android:layout_marginEnd="1dp"
+                    android:layout_marginEnd="16dp"
                     android:layout_toStartOf="@+id/autoUpdateSwitch" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
