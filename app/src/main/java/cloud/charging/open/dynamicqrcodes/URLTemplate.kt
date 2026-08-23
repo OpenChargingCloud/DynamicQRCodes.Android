@@ -9,7 +9,9 @@ package cloud.charging.open.dynamicqrcodes
  */
 object URLTemplate {
 
-    private val PLACEHOLDER = Regex("""\{(\w+)}""")
+    // The closing brace is escaped on purpose: Android matches with ICU, which
+    // rejects a bare "}" that the desktop JVM still accepts.
+    private val PLACEHOLDER = Regex("""\{(\w+)\}""")
 
     // A placeholder never spans a path segment or reaches into the query.
     private const val PLACEHOLDER_PATTERN = "([^/?#]+)"
