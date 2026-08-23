@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private val errorColor by lazy {
         MaterialColors.getColor(binding.resultingURL, androidx.appcompat.R.attr.colorError)
     }
+    private val validColor by lazy { getColor(R.color.totpValid) }
 
     private val updateTimestampTask = object : Runnable {
         override fun run() {
@@ -72,8 +73,7 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 Log.d("MainActivity", "Scanned")
-                Toast.makeText(this, getString(R.string.scanResult, result.contents), Toast.LENGTH_LONG)
-                    .show()
+                validateScannedURL(result.contents)
             }
 
     }
@@ -151,6 +151,8 @@ class MainActivity : AppCompatActivity() {
         binding.scanButton.isVisible = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
 
         binding.scanButton.setOnClickListener {
+            binding.scanResult.isVisible = false
+            binding.scannedURL.isVisible = false
             val options = ScanOptions()
             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
             options.setPrompt(getString(R.string.scanQRCodePrompt))
@@ -253,6 +255,67 @@ class MainActivity : AppCompatActivity() {
                                                                  remainingTime,
                                                                  remainingTime)
 
+    }
+
+    /**
+     * Check a scanned URL the way a CSMS would: pull the TOTP out of it using
+     * the URL template, then verify it against the configured shared secret.
+     *
+     * The check uses the timestamp from the input field rather than the system
+     * clock, so that it agrees with the URL shown above it. With auto update
+     * running - the default - the two are the same thing.
+     */
+    private fun validateScannedURL(scannedURL: String) {
+
+        binding.scannedURL.text      = scannedURL
+        binding.scannedURL.isVisible = true
+
+        val totp = URLTemplate.extract(binding.urlTemplate.text.toString(), scannedURL)
+                              ?.get("totp")
+
+        if (totp == null) {
+            showScanResult(getString(R.string.scanNoTemplateMatch), false)
+            return
+        }
+
+        val timestamp = try {
+            timestampFormat.parse(binding.timestamp.text.toString())?.time
+        } catch (e: ParseException) {
+            null
+        } catch (e: NumberFormatException) {
+            null
+        }
+
+        val validation = try {
+            TOTP.validate(totp,
+                          binding.sharedSecret.text.toString(),
+                          binding.validityTime.text.toString().toUIntOrNull(),
+                          binding.totpLength.  text.toString().toUIntOrNull(),
+                          binding.alphabet.    text.toString(),
+                          timestamp)
+        } catch (e: IllegalArgumentException) {
+            showScanResult(e.message ?: getString(R.string.error_invalid_input), false)
+            return
+        }
+
+        showScanResult(
+            getString(
+                when (validation) {
+                    TOTPValidation.CURRENT  -> R.string.scanValidCurrent
+                    TOTPValidation.PREVIOUS -> R.string.scanValidPrevious
+                    TOTPValidation.NEXT     -> R.string.scanValidNext
+                    TOTPValidation.INVALID  -> R.string.scanInvalid
+                }
+            ),
+            validation.isValid
+        )
+
+    }
+
+    private fun showScanResult(message: String, valid: Boolean) {
+        binding.scanResult.text      = message
+        binding.scanResult.setTextColor(if (valid) validColor else errorColor)
+        binding.scanResult.isVisible = true
     }
 
     private fun showError(message: String) {

@@ -190,6 +190,32 @@
                 android:textColor="?attr/colorPrimary"
                 android:textAlignment="center" />
 
+            <!-- Verdict of the last scan, filled in by MainActivity -->
+            <TextView
+                android:id="@+id/scanResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:padding="8dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:visibility="gone"
+                tools:text="TOTP valid — current time slot"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/scannedURL"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="8dp"
+                android:textSize="13sp"
+                android:textIsSelectable="true"
+                android:textAlignment="center"
+                android:visibility="gone"
+                tools:text="https://charging.cloud/DE*GEF*E12345*678*1/CN63y502maVh"
+                tools:visibility="visible" />
+
             <!-- Scan QR Code Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/scan_button"

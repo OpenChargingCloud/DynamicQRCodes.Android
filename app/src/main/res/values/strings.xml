@@ -31,7 +31,12 @@
     <string name="scanQRCodePrompt">Scan a QR code</string>
     <string name="scanCancelled">Cancelled</string>
     <string name="scanMissingCameraPermission">Cancelled due to missing camera permission</string>
-    <string name="scanResult">Scanned: %1$s</string>
+
+    <string name="scanValidCurrent">TOTP valid — current time slot</string>
+    <string name="scanValidPrevious">TOTP valid — previous time slot</string>
+    <string name="scanValidNext">TOTP valid — next time slot</string>
+    <string name="scanInvalid">TOTP invalid!</string>
+    <string name="scanNoTemplateMatch">The scanned URL does not match the URL template!</string>
 
     <!-- Input errors -->
     <string name="error_invalid_timestamp">The timestamp must be formatted as yyyy-MM-dd HH:mm:ss!</string>

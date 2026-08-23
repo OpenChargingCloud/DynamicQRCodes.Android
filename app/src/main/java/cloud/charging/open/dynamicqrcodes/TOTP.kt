@@ -2,6 +2,7 @@ package cloud.charging.open.dynamicqrcodes
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -84,5 +85,38 @@ object TOTP {
                )
 
     }
+
+    /**
+     * Verify a TOTP taken from a scanned URL, the way a CSMS does.
+     *
+     * OCPP 2.1 C25 asks for the neighbouring time slots to be accepted as well:
+     * a token is generated slightly before it is scanned, and the clocks of
+     * Charging Station and CSMS never agree exactly.
+     *
+     * @throws IllegalArgumentException  when a parameter violates the algorithm constraints.
+     */
+    fun validate(totp:          String,
+                 sharedSecret:  String,
+                 validityTime:  UInt?     = null,
+                 totpLength:    UInt?     = null,
+                 alphabet:      String?   = null,
+                 timestamp:     Long?     = null): TOTPValidation {
+
+        val expected = generateTOTPs(sharedSecret, validityTime, totpLength, alphabet, timestamp)
+
+        // Compared in constant time: a validator that returns faster the more
+        // characters match tells an attacker how far a guess got.
+        return when {
+            matches(totp, expected.current)   -> TOTPValidation.CURRENT
+            matches(totp, expected.previous)  -> TOTPValidation.PREVIOUS
+            matches(totp, expected.next)      -> TOTPValidation.NEXT
+            else                              -> TOTPValidation.INVALID
+        }
+
+    }
+
+    private fun matches(a: String, b: String): Boolean =
+        MessageDigest.isEqual(a.toByteArray(Charsets.UTF_8),
+                              b.toByteArray(Charsets.UTF_8))
 
 }

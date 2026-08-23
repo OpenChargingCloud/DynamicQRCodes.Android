@@ -1,0 +1,4 @@
+<resources>
+    <!-- A verdict colour, since Material 3 has no semantic "success" role. -->
+    <color name="totpValid">#1B7F3B</color>
+</resources>
