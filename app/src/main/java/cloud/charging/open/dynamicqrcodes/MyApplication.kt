@@ -1,18 +1,27 @@
-package cloud.charging.open.dynamicqrcodes;
+package cloud.charging.open.dynamicqrcodes
 
 import android.app.Application
 import android.util.Log
 
 class MyApplication : Application() {
+
     override fun onCreate() {
 
         super.onCreate()
 
-        // Set the default uncaught exception handler
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+
             Log.e("UncaughtException", "Uncaught exception in thread: ${thread.name}", throwable)
-            // Optionally, you can restart the app or log the exception to a server
+
+            // Hand the exception back to Android: without this the process
+            // stays alive in a broken state and the crash never reaches the
+            // Play Console.
+            defaultHandler?.uncaughtException(thread, throwable)
+
         }
 
     }
+
 }

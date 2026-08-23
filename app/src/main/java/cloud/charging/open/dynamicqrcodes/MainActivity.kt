@@ -9,45 +9,42 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.activity.OnBackPressedCallback
-//import androidx.navigation.ui.AppBarConfiguration
 import cloud.charging.open.dynamicqrcodes.databinding.ActivityMainBinding
-import com.google.android.material.switchmaterial.SwitchMaterial
-import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.color.MaterialColors
 import com.google.zxing.client.android.Intents
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
+import java.security.SecureRandom
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 class MainActivity : AppCompatActivity() {
 
-    //private lateinit var appBarConfiguration: AppBarConfiguration
-    private lateinit var binding:             ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
 
-    private lateinit var autoUpdateSwitch: SwitchMaterial
-    private lateinit var timestamp: TextInputEditText
-    private val handler         = Handler(Looper.getMainLooper())
-    private val updateInterval  = 1000L // 1 second
+    private val handler          = Handler(Looper.getMainLooper())
+    private val updateInterval   = 1000L // 1 second
+    private val secureRandom     = SecureRandom()
+
+    private val timestampFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
+        // Reject "2024-99-99" instead of rolling it over into a valid date.
+        isLenient = false
+    }
+
+    private var resultColor      = 0
+    private val errorColor by lazy {
+        MaterialColors.getColor(binding.resultingURL, androidx.appcompat.R.attr.colorError)
+    }
 
     private val updateTimestampTask = object : Runnable {
         override fun run() {
-            if (autoUpdateSwitch.isChecked) {
-                val currentTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                //val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
-                //dateFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
-                //return dateFormat.format(Date())
-                timestamp.setText(currentTime)
+            if (binding.autoUpdateSwitch.isChecked) {
+                binding.timestamp.setText(timestampFormat.format(Date()))
                 handler.postDelayed(this, updateInterval)
             }
         }
@@ -94,33 +91,21 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-            timestamp         = findViewById(R.id.timestamp)
-            autoUpdateSwitch  = findViewById(R.id.autoUpdateSwitch)
-        val urlTemplate       = findViewById<EditText>      (R.id.urlTemplate)
-        val evseId            = findViewById<EditText>      (R.id.evseId)
-        val sharedSecret      = findViewById<EditText>      (R.id.sharedSecret)
-        val validityTime      = findViewById<EditText>      (R.id.validityTime)
-        val totpLength        = findViewById<EditText>      (R.id.totpLength)
-        val alphabet          = findViewById<EditText>      (R.id.alphabet)
+        resultColor = binding.resultingURL.currentTextColor
 
-        val resultingURL      = findViewById<TextView>      (R.id.resultingURL)
-        val remainingTime     = findViewById<TextView>      (R.id.remainingTime)
-
-        autoUpdateSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
+        binding.autoUpdateSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked)
                 handler.post(updateTimestampTask)
-            } else {
+            else
                 handler.removeCallbacks(updateTimestampTask)
-            }
         }
 
-        autoUpdateSwitch.isChecked = true
+        binding.autoUpdateSwitch.isChecked = true
 
-        timestamp.setOnTouchListener { view, event ->
+        binding.timestamp.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                // Deactivate the autoUpdateSwitch
-                autoUpdateSwitch.isChecked = false
-                // Remove any pending update tasks
+                // Editing the timestamp by hand stops the clock.
+                binding.autoUpdateSwitch.isChecked = false
                 handler.removeCallbacks(updateTimestampTask)
                 // Call performClick to ensure proper accessibility behavior
                 view.performClick()
@@ -128,70 +113,35 @@ class MainActivity : AppCompatActivity() {
             false
         }
 
-        timestamp.setOnClickListener {
-            // Handle click event if needed
-        }
-
-        urlTemplate. setText(R.string.defaultURLTemplate)
-        evseId.      setText(R.string.defaultEVSEId)
-        sharedSecret.setText(generateRandomString(16))
-        validityTime.setText(R.string.defaultValidityTime)
-        totpLength.  setText(R.string.defaultTOTPLength)
-        alphabet.    setText(R.string.defaultAlphabet)
+        binding.timestamp.   setText(timestampFormat.format(Date()))
+        binding.urlTemplate. setText(R.string.defaultURLTemplate)
+        binding.evseId.      setText(R.string.defaultEVSEId)
+        binding.sharedSecret.setText(generateRandomSecret(16))
+        binding.validityTime.setText(R.string.defaultValidityTime)
+        binding.totpLength.  setText(R.string.defaultTOTPLength)
+        binding.alphabet.    setText(R.string.defaultAlphabet)
 
         val textWatcher = object : TextWatcher {
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-
-                val timestampText = timestamp.text.toString()
-
-                if (timestampText != "")
-                {
-
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                    val date: Date = dateFormat.parse(timestamp.text.toString()) ?: throw IllegalArgumentException("Invalid date format!")
-
-                    val validityTimeUInt: UInt = try {
-                        validityTime.text.toString().toUInt()
-                    } catch (e: NumberFormatException) {
-                        throw IllegalArgumentException("Invalid validity time format!")
-                    }
-
-                    val totpLengthUInt: UInt = try {
-                        totpLength.text.toString().toUInt()
-                    } catch (e: NumberFormatException) {
-                        throw IllegalArgumentException("Invalid totp length format!")
-                    }
-
-                    val totp            = generateTOTPs(sharedSecret.text.toString(),
-                                                        validityTimeUInt,
-                                                        totpLengthUInt,
-                                                        alphabet.text.toString(),
-                                                        date.time)
-
-                    var updatedUrl      = urlTemplate.text.toString()
-                    updatedUrl          = updatedUrl.replace("{evseId}", evseId.text.toString())
-                    updatedUrl          = updatedUrl.replace("{totp}",   totp.current)
-
-                    resultingURL. text  = updatedUrl
-                    remainingTime.text  = getString(R.string.remaining_time, totp.remainingTime.toLong())
-
-                }
-
+                updateResultingURL()
             }
 
             override fun afterTextChanged(s: Editable?) { }
 
         }
 
-        sharedSecret.addTextChangedListener(textWatcher)
-        evseId.      addTextChangedListener(textWatcher)
-        timestamp.   addTextChangedListener(textWatcher)
+        binding.timestamp.   addTextChangedListener(textWatcher)
+        binding.urlTemplate. addTextChangedListener(textWatcher)
+        binding.evseId.      addTextChangedListener(textWatcher)
+        binding.sharedSecret.addTextChangedListener(textWatcher)
+        binding.validityTime.addTextChangedListener(textWatcher)
+        binding.totpLength.  addTextChangedListener(textWatcher)
+        binding.alphabet.    addTextChangedListener(textWatcher)
 
-        // Manually trigger the onTextChanged event
-        textWatcher.onTextChanged(null,0,0,0)
+        updateResultingURL()
 
         binding.scanButton.setOnClickListener {
             val options = ScanOptions()
@@ -203,93 +153,77 @@ class MainActivity : AppCompatActivity() {
             barcodeLauncher.launch(options)
         }
 
-        // Handle predictive back gesture
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                // Back navigation logic here
-                // If you don't need custom behavior, just call remove() to let the system handle it
-                // remove()
-                finish()
-            }
-        })
     }
 
-    private fun generateRandomString(length: Int): String {
+    override fun onDestroy() {
+        handler.removeCallbacks(updateTimestampTask)
+        super.onDestroy()
+    }
+
+    /**
+     * Recalculate the resulting URL from the current input. Invalid input is
+     * reported in place of the URL: this runs on every keystroke and once per
+     * second while the clock is running, so it must never throw.
+     */
+    private fun updateResultingURL() {
+
+        val date = try {
+            timestampFormat.parse(binding.timestamp.text.toString())
+        } catch (e: ParseException) {
+            null
+        } catch (e: NumberFormatException) {
+            // Numeric fields far outside their range never reach ParseException.
+            null
+        }
+
+        if (date == null) {
+            showError(getString(R.string.error_invalid_timestamp))
+            return
+        }
+
+        val validityTime = binding.validityTime.text.toString().toUIntOrNull()
+        if (validityTime == null) {
+            showError(getString(R.string.error_invalid_validity_time))
+            return
+        }
+
+        val totpLength = binding.totpLength.text.toString().toUIntOrNull()
+        if (totpLength == null) {
+            showError(getString(R.string.error_invalid_totp_length))
+            return
+        }
+
+        val totp = try {
+            TOTP.generateTOTPs(binding.sharedSecret.text.toString(),
+                               validityTime,
+                               totpLength,
+                               binding.alphabet.text.toString(),
+                               date.time)
+        } catch (e: IllegalArgumentException) {
+            showError(e.message ?: getString(R.string.error_invalid_input))
+            return
+        }
+
+        binding.resultingURL.setTextColor(resultColor)
+        binding.resultingURL.text  = binding.urlTemplate.text.toString()
+                                            .replace("{evseId}", binding.evseId.text.toString())
+                                            .replace("{totp}",   totp.current)
+
+        binding.remainingTime.text = getString(R.string.remaining_time, totp.remainingTime.toLong())
+
+    }
+
+    private fun showError(message: String) {
+        binding.resultingURL.setTextColor(errorColor)
+        binding.resultingURL. text = message
+        binding.remainingTime.text = ""
+    }
+
+    private fun generateRandomSecret(length: Int): String {
         val allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_+!$%&/()=?@#*"
         return (1..length)
-            .map { allowedChars.random() }
+            .map { allowedChars[secureRandom.nextInt(allowedChars.length)] }
             .joinToString("")
-    }
-
-    private fun isLittleEndian(): Boolean {
-        return ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
-    }
-
-    private fun reverseBytes(bytes: ByteArray) {
-        bytes.reverse()
-    }
-
-    private fun calcTOTPSlot(slotBytes:     ByteArray,
-                             totpLength:    Int,
-                             alphabet:      String,
-                             sharedSecret:  String): String {
-
-        if (isLittleEndian())
-            reverseBytes(slotBytes)
-
-        val hmac         = Mac.getInstance("HmacSHA256")
-        val keySpec      = SecretKeySpec(sharedSecret.toByteArray(Charsets.UTF_8), "HmacSHA256")
-        hmac.init(keySpec)
-        val currentHash  = hmac.doFinal(slotBytes)
-        val offset       = currentHash[currentHash.size - 1].toInt() and 0x0F
-        val result       = StringBuilder()
-
-        for (i in 0 until totpLength)
-            result.append(alphabet[(currentHash[(offset + i) % currentHash.size].toInt() and 0xFF) % alphabet.length])
-
-        return result.toString()
-
-    }
-
-    private fun generateTOTPs(sharedSecret:  String,
-                              validityTime:  UInt?     = null,
-                              totpLength:    UInt?     = null,
-                              alphabet:      String?   = null,
-                              timestamp:     Long?     = null
-    ): TOTPResult {
-
-        val sharedSecretLocal  =  sharedSecret.trim()
-        val validityTimeLocal  = (validityTime        ?: 30U).toInt()
-        val totpLengthLocal    = (totpLength          ?: 12U).toInt()
-        val alphabetLocal      =  alphabet?.   trim() ?: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        val currentUnixTime    = (timestamp           ?: System.currentTimeMillis()) / 1000
-
-        require(sharedSecretLocal.isNotEmpty())                           { "The given shared secret must not be null or empty!" }
-        require(!sharedSecretLocal.contains("\\s".toRegex()))             { "The given shared secret must not contain any whitespace characters!" }
-        require(sharedSecretLocal.length >= 16)                     { "The length of the given shared secret must be at least 16 characters!" }
-        require(totpLengthLocal in 4..255)                    { "The expected length of the TOTP must be between 4 and 255 characters!" }
-        require(alphabetLocal.isNotEmpty())                               { "The given alphabet must not be null or empty!" }
-        require(alphabetLocal.length >= 4)                          { "The given alphabet must contain at least 4 characters!" }
-        require(alphabetLocal.toSet().size == alphabetLocal.length) { "The given alphabet must not contain duplicate characters!" }
-        require(!alphabetLocal.contains("\\s".toRegex()))                 { "The given alphabet must not contain any whitespace characters!" }
-
-        val currentSlot        = currentUnixTime / validityTimeLocal
-        val remainingTime      = validityTimeLocal - (currentUnixTime % validityTimeLocal)
-
-        // For interoperability we use 8 byte timestamps
-        val previousSlotBytes  = ByteBuffer.allocate(8).putLong(currentSlot - 1).array()
-        val currentSlotBytes   = ByteBuffer.allocate(8).putLong(currentSlot).array()
-        val nextSlotBytes      = ByteBuffer.allocate(8).putLong(currentSlot + 1).array()
-
-        val previous           = calcTOTPSlot(previousSlotBytes, totpLengthLocal, alphabetLocal, sharedSecretLocal)
-        val current            = calcTOTPSlot(currentSlotBytes,  totpLengthLocal, alphabetLocal, sharedSecretLocal)
-        val next               = calcTOTPSlot(nextSlotBytes,     totpLengthLocal, alphabetLocal, sharedSecretLocal)
-
-        return TOTPResult(previous,
-                          current,
-                          next,
-                          remainingTime.toULong())
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -309,9 +243,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        //val navController = findNavController(R.id.nav_host_fragment_content_main)
-        //return navController.navigateUp(appBarConfiguration)
-        //        || super.onSupportNavigateUp()
         return true
     }
 

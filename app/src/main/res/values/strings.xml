@@ -23,4 +23,9 @@
 
     <string name="remaining_time">Remaining Time: %1$d secs</string>
 
+    <string name="error_invalid_timestamp">The timestamp must be formatted as yyyy-MM-dd HH:mm:ss!</string>
+    <string name="error_invalid_validity_time">The validity time must be a positive integer number of seconds!</string>
+    <string name="error_invalid_totp_length">The TOTP length must be a positive integer number!</string>
+    <string name="error_invalid_input">Please check the given parameters!</string>
+
 </resources>
