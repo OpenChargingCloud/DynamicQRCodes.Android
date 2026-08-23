@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 // Signing credentials live outside the repository. Copy
@@ -17,7 +16,9 @@ val keystoreProperties     = Properties().apply {
 
 android {
     namespace = "cloud.charging.open.dynamicqrcodes"
-    compileSdk = 36
+    // Compiling against 37 while still targeting 36: newer APIs become visible,
+    // the runtime behaviour the app opts into does not change.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "cloud.charging.open.dynamicqrcodes"
@@ -61,11 +62,8 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
+// No kotlin { compilerOptions { jvmTarget } } block: with the built-in Kotlin
+// of AGP 9 the JVM target follows compileOptions.targetCompatibility above.
 
 dependencies {
 
