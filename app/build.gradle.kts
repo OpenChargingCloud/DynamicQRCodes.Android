@@ -33,14 +33,12 @@ val keystoreProperties     = Properties().apply {
 
 android {
     namespace = "cloud.charging.open.dynamicqrcodes"
-    // Compiling against 37 while still targeting 36: newer APIs become visible,
-    // the runtime behaviour the app opts into does not change.
     compileSdk = 37
 
     defaultConfig {
         applicationId = "cloud.charging.open.dynamicqrcodes"
         minSdk = 31
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 5
         versionName = "1.4"
 
