@@ -69,3 +69,10 @@ without touching the repository, set `org.gradle.java.home` in your personal
 
 * Android 12 (API 31) or newer
 * A camera, only for scanning QR codes
+
+## License
+
+Copyright 2024-2026 GraphDefined GmbH
+
+Licensed under the Apache License, Version 2.0; see [LICENSE](LICENSE). The
+same license as the sibling implementations of this algorithm.
