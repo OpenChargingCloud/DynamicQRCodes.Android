@@ -38,10 +38,6 @@ import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import cloud.charging.open.dynamicqrcodes.databinding.ActivityMainBinding
 import com.google.android.material.color.MaterialColors
-import com.google.zxing.client.android.Intents
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanIntentResult
-import com.journeyapps.barcodescanner.ScanOptions
 import java.security.SecureRandom
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -78,25 +74,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val barcodeLauncher = registerForActivityResult(ScanContract()) {
+    private val barcodeLauncher = registerForActivityResult(ScannerActivity.Contract()) { contents ->
 
-        result: ScanIntentResult ->
-
-            if (result.contents == null) {
-                val originalIntent = result.originalIntent
-                if (originalIntent == null) {
-                    Log.d("MainActivity", "Cancelled scan")
-                    Toast.makeText(this, R.string.scanCancelled, Toast.LENGTH_LONG)
-                        .show()
-                } else if (originalIntent.hasExtra(Intents.Scan.MISSING_CAMERA_PERMISSION)) {
-                    Log.d("MainActivity", "Cancelled scan due to missing camera permission")
-                    Toast.makeText(this, R.string.scanMissingCameraPermission, Toast.LENGTH_LONG)
-                        .show()
-                }
-            } else {
-                Log.d("MainActivity", "Scanned")
-                validateScannedURL(result.contents)
-            }
+        if (contents == null) {
+            Log.d("MainActivity", "Cancelled scan")
+            Toast.makeText(this, R.string.scanCancelled, Toast.LENGTH_LONG).show()
+        } else {
+            Log.d("MainActivity", "Scanned")
+            validateScannedURL(contents)
+        }
 
     }
 
@@ -178,12 +164,7 @@ class MainActivity : AppCompatActivity() {
             binding.scanResult.isVisible    = false
             binding.scannedEvseId.isVisible = false
             binding.scannedURL.isVisible    = false
-            val options = ScanOptions()
-            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-            options.setPrompt(getString(R.string.scanQRCodePrompt))
-            options.setBeepEnabled(true)
-            options.setBarcodeImageEnabled(true)
-            barcodeLauncher.launch(options)
+            barcodeLauncher.launch(Unit)
         }
 
     }

@@ -30,6 +30,7 @@
     <string name="scanQRCode">Scan QR Code</string>
     <string name="scanQRCodePrompt">Scan a QR code</string>
     <string name="scanCancelled">Cancelled</string>
+    <string name="scanCameraUnavailable">The camera could not be started</string>
     <string name="scanMissingCameraPermission">Cancelled due to missing camera permission</string>
 
     <string name="scanValidCurrent">TOTP valid — current time slot</string>

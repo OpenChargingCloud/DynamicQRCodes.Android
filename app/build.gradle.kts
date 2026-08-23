@@ -93,8 +93,13 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.activity)
 
-    // https://github.com/journeyapps/zxing-android-embedded
-    implementation(libs.zxing.android.embedded)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+
+    // Only the decoder: the camera side of zxing-android-embedded was built on
+    // Camera1 and last released in 2021, CameraX above replaces it.
     implementation(libs.zxing.core)
 
     testImplementation(libs.junit)

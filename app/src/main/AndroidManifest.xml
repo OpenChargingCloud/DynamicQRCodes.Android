@@ -28,6 +28,13 @@
             </intent-filter>
         </activity>
 
+        <!-- No screenOrientation: the scanner follows the device, which is what
+             Android 17 enforces on large screens anyway. -->
+        <activity
+            android:name=".ScannerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.DynamicQRCodes.Scanner" />
+
     </application>
 
 </manifest>

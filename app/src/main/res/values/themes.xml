@@ -6,4 +6,10 @@
     </style>
 
     <style name="Theme.DynamicQRCodes" parent="Base.Theme.DynamicQRCodes" />
+
+    <!-- Black behind the camera preview, so nothing flashes bright while it
+         starts up, and painted once rather than over the theme's own colour. -->
+    <style name="Theme.DynamicQRCodes.Scanner" parent="Theme.DynamicQRCodes">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 </resources>
