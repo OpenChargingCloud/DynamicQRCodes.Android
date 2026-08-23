@@ -25,6 +25,8 @@ build/
 
 # Gradle
 .gradle/
+# Kotlin Gradle plugin session directory
+.kotlin/
 !/src//build/
 !/src//build.gradle
 !/src//settings.gradle
