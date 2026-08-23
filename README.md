@@ -1,5 +1,7 @@
 # Dynamic QR Codes for Android
 
+<img src="images/play-store-icon-512.png" alt="" width="96" align="right" />
+
 An Android app for generating the **dynamic QR code URLs** used for ad hoc
 payment at charging stations, as defined by OCPP 2.1 (Edition 2), use case
 **C25 — Ad hoc payment via a QR code**.
