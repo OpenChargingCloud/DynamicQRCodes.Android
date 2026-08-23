@@ -7,9 +7,7 @@ junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 appcompat = "1.8.0"
-# Material stays on 1.13.0 for now: minor releases can restyle components,
-# which needs a look on a real device rather than a green build.
-material = "1.13.0"
+material = "1.14.0"
 constraintlayout = "2.2.2"
 activity = "1.13.0"
 zxingAndroidEmbedded = "4.3.0"
