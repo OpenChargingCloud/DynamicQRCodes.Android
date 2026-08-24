@@ -1,13 +1,13 @@
-# Dynamic QR Codes for Android
+# Dynamic QR-Codes for Android
 
 <img src="images/play-store-icon-512.png" alt="" width="96" align="right" />
 
-An Android app for generating the **dynamic QR code URLs** used for ad hoc
-payment at charging stations, as defined by OCPP 2.1 (Edition 2), use case
+An Android app for generating the **Secure Dynamic QR-Code URLs** used for *Ad hoc
+payment at charging stations*, as defined by OCPP 2.1 (Edition 2), use case
 **C25 — Ad hoc payment via a QR code**.
 
-A static QR code sticker on a charging station can be replaced by a fraudulent
-one pointing at a fake payment site. A dynamic QR code prevents this: the URL
+A static QR-Code sticker on a charging station can be replaced by a fraudulent
+one pointing at a fake payment site. A secure dynamic QR-Code prevents this: the URL
 carries a time-based one-time password derived from a shared secret known only
 to the Charging Station and the CSMS, so a scanned URL can be proven authentic
 and expires within seconds.
@@ -25,20 +25,23 @@ implementation.
 
 **As a Charging Station**
 
-* Generate a dynamic QR code URL from a configurable URL template,
+* Generate a secure dynamic QR-Code URL from a configurable URL template,
   EVSE ID, shared secret, validity time, TOTP length and alphabet
-* A running clock, or a manually entered timestamp, to inspect
+* A running and syncing a clock against legal time servers, to inspect
   the URL of any given moment
 * Live display of the remaining validity of the current time slot
 
 **As a CSMS**
 
-* Scan a QR code and read its placeholders back out using the URL template
+* Receive a request including a secure dynamic QR-Code and read its placeholders
+  back out using the URL template
 * Verify the token against the previous, the current and the next time slot,
   and report which one matched - a token that keeps landing in a neighbour
   points at a drifting clock
 * Report a URL that does not follow the template at all, which is the
   sticker-over-sticker fraud C25 exists to prevent
+* Achieve some **proof-of-presence**, that the EV driver is really in front of
+  the given charging station
 
 Validation uses the timestamp from the input field rather than the system
 clock, so that it agrees with the URL shown above it. Freezing the timestamp
