@@ -82,3 +82,9 @@ local.properties
 .idea/lookup.xml
 .idea/codestyles/
 .idea/jsLibraryMappings.xml
+
+# Written by .github/workflows/vector-drift.yml from the published specification
+# and read by UpstreamVectorTest. Never commit it: a checked-in copy would keep
+# the nightly comparing against frozen data while reporting it as "upstream",
+# which is worse than having no comparison at all.
+/app/src/test/resources/upstream-generation-vectors.tsv

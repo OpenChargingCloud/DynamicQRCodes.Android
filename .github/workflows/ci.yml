@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  # Manual runs from the Actions tab, same as the other two workflows.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Pull requests: one run per branch, newest wins. Pushes: one run per commit,
+  # cancelling nothing - a commit without a verdict is a hole nobody comes back
+  # to fill. Keyed on the SHA rather than only turning cancel-in-progress off,
+  # so that a third push cannot discard the second before it has started.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Everything that needs no device. One runner, one JDK: unlike the JavaScript
+  # repositories in this family there is nothing to gain from a matrix here -
+  # the Android build produces the same DEX from the same AGP wherever it runs,
+  # and the JVM version is pinned by compileOptions rather than discovered.
+  # Nightly covers the "what about the next JDK" question instead.
+  # ---------------------------------------------------------------------------
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Two vectors sit on slot boundaries and one crosses the y2038 line. They
+      # pass the timestamp in explicitly, so the zone cannot actually reach
+      # them - but a suite about time that quietly depends on the runner's
+      # locale is a bad surprise waiting for the one test that forgets to.
+      TZ: UTC
+
+    steps:
+
+      - uses: actions/checkout@v7
+
+      # JDK 21: the README names it as the verified version, and
+      # compileOptions pins source and target compatibility to 17 regardless,
+      # so this is the JVM the build runs *on*, not the bytecode it emits.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # Caches ~/.gradle across runs and, on pull requests, writes the build
+      # scan style summary into the job. The wrapper JAR is validated against
+      # Gradle's published checksums by default, which is worth having: this
+      # repository ships that JAR, and for a while it shipped one whose
+      # checksum did not match any release.
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Kept as separate steps on purpose - the Actions UI then names the phase
+      # that broke without anyone having to open the log.
+      - name: Unit tests
+        run: ./gradlew test --console=plain
+
+      - name: Android Lint
+        run: ./gradlew lint --console=plain
+
+      - name: Assemble debug
+        run: ./gradlew assembleDebug --console=plain
+
+      # The step that earns its keep. It is the only one that runs R8 and the
+      # resource shrinker: "test" above compiles and runs unminified classes,
+      # so a keep rule that stops covering something used reflectively is
+      # invisible to it and would surface for the first time on a device, after
+      # an upload. minifyEnabled has been on since 2fc1c63 and until now
+      # nothing verified it outside a release built by hand.
+      #
+      # No secrets involved: build.gradle.kts treats a missing
+      # keystore.properties as "produce an unsigned release" rather than as an
+      # error, which is exactly what a CI runner should get.
+      - name: Assemble release (runs R8 and the resource shrinker)
+        run: ./gradlew assembleRelease --console=plain
+
+      # !cancelled() rather than always(): a cancelled run has nothing to say,
+      # but a failed one has the most to say of all, and that is precisely when
+      # the HTML report is worth having.
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-unit-and-lint
+          path: |
+            app/build/reports/tests/**
+            app/build/reports/lint-results-*.html
+            app/build/test-results/**/*.xml
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # The instrumented tests, on a real emulator.
+  #
+  # This job exists because of a bug that shipped. URLTemplate matches with a
+  # regular expression; local unit tests evaluate that expression with the
+  # JVM's engine, Android evaluates it with ICU, and the two disagree about
+  # whether a bare "}" is a valid pattern. The JVM accepted it, so "gradlew
+  # test" was green - while the app threw PatternSyntaxException on every
+  # single scan. No amount of unit testing can close that gap: it is a
+  # difference between two runtimes, and only one of them is a JVM on a
+  # developer machine.
+  #
+  # API 31 rather than the newest, because minSdk is where the divergences bite
+  # hardest and a gate should test the floor. The ceiling is nightly's job.
+  # ---------------------------------------------------------------------------
+  instrumented:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+
+      # Hardware acceleration is the difference between a 4 minute job and one
+      # that times out. ubuntu-latest runners do expose /dev/kvm, but only to a
+      # user in the right group, and the emulator does not say so clearly when
+      # it is missing - it just crawls.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # The only third-party action in this repository, and there is no
+      # official alternative: booting an emulator and waiting for it correctly
+      # is a good hundred lines of shell that this action already gets right.
+      #
+      # aosp_atd is a stripped, headless system image built for exactly this -
+      # it boots in a fraction of the time of a full google_apis image, and
+      # nothing here needs Play services. disable-animations keeps Espresso
+      # from racing the transition it is looking at.
+      - name: Instrumented tests (API 31)
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          target: aosp_atd
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest --console=plain
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-instrumented-api31
+          path: |
+            app/build/reports/androidTests/**
+            app/build/outputs/androidTest-results/**
+          if-no-files-found: ignore

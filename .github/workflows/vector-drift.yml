@@ -1,0 +1,290 @@
+name: Vector drift
+
+# The third workflow, and the only one that does not test what this repository
+# contains. ci.yml and nightly.yml both run the conformance vectors as they are
+# PINNED here: 29 generation vectors and 13 rejection cases, written out as
+# Kotlin literals in TOTPTest.kt. That is the right thing for a gate - it is
+# reproducible, needs no network, and a red run is unambiguously about code
+# somebody here wrote.
+#
+# It also means the published suite could grow, or correct itself, and nothing
+# in this repository would notice until somebody thought to look. For an app
+# whose entire purpose is producing tokens a CSMS will accept, "our copy of the
+# specification is a year old" is not a documentation problem - it is a
+# wrong-output problem, and this app has already shipped one of those.
+#
+# So this workflow goes and asks. Two jobs, because they answer two questions
+# that want different reactions:
+#
+#   declared-vectors red -> the suite gained an id nobody here has classified.
+#                           Decide whether it applies, then add a line to
+#                           conformance-vector-scope.txt either way. Nothing is
+#                           broken yet.
+#   published-values red -> a vector we claim to cover expects something other
+#                           than what TOTP.kt computes. Drop everything: either
+#                           the specification changed under us or the
+#                           implementation is wrong, and both mean the tokens
+#                           this app generates are being rejected somewhere.
+#
+# Scheduled workflows only ever run on the default branch, and GitHub disables
+# them after 60 days without repository activity. If this stops reporting,
+# check that first.
+on:
+  schedule:
+    # 04:41 UTC, well after nightly.yml at 03:11. When both are red on the same
+    # morning, read the nightly first: if the pinned build is broken, the
+    # published vectors failing too says nothing new.
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vector-drift-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # The vectors are normative annex material of the specification, not test
+  # data belonging to any one implementation. TOTP.ts vendors a copy and the
+  # C# harness pulls this repository in as a submodule; both track what lives
+  # here, so this is where to ask rather than at a sibling's copy.
+  SPEC_REPOSITORY: https://github.com/OpenChargingTechnology/Whitepapers.git
+  VECTOR_PATH: TimeBasedOneTimePasswords/test-vectors
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Does conformance-vector-scope.txt still know about every published vector?
+  #
+  # Note the shape of the question. It is not "do we cover everything" - we
+  # deliberately do not, and the scope file records why for each of the
+  # fourteen we skip. It is "has anything been published that nobody here has
+  # looked at", which is the case that used to be invisible, because a vector
+  # considered and rejected and a vector never noticed looked identical from
+  # inside this repository.
+  # ---------------------------------------------------------------------------
+  declared-vectors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+
+      - uses: actions/checkout@v7
+
+      # Blobless and sparse: the specification repository is a whitepaper
+      # collection and most of it is documents. Only two JSON files are wanted,
+      # and cloning the rest to read them would be rude to somebody else's
+      # bandwidth every single night.
+      - name: Fetch the published vectors
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPOSITORY" "$RUNNER_TEMP/spec"
+          git -C "$RUNNER_TEMP/spec" sparse-checkout set "$VECTOR_PATH"
+          {
+            echo "## Published vectors"
+            echo
+            echo "\`$(git -C "$RUNNER_TEMP/spec" rev-parse --short HEAD)\` $(git -C "$RUNNER_TEMP/spec" log -1 --format='%ad %an: %s' --date=short)"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Compare against conformance-vector-scope.txt
+        env:
+          # comm compares byte by byte and quietly produces nonsense when its
+          # inputs are ordered any other way, while sort follows the locale -
+          # and these ids are full of hyphens and digits, which is exactly
+          # where the two disagree. Pinning the collation makes both agree by
+          # construction rather than by luck about the runner's environment.
+          LC_ALL: C
+        run: |
+          scope=app/src/test/resources/conformance-vector-scope.txt
+          status=0
+
+          # The section title travels with the files and has changed before -
+          # "Open Charging Cloud" became "Open Charging Technology" - so it is
+          # worth seeing, but a rename breaks nothing and must not be fatal.
+          {
+            echo "Format: **$(jq -r '.specification' "$RUNNER_TEMP/spec/$VECTOR_PATH/totp-test-vectors.json")**"
+            echo
+            echo "| Section | Published | Declared | Covered | Out of scope | Undeclared | Vanished |"
+            echo "|---|---|---|---|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for section in generation invalid-inputs; do
+
+            case "$section" in
+              generation)     file=totp-test-vectors.json ;;
+              invalid-inputs) file=totp-invalid-inputs.json ;;
+            esac
+
+            jq -r '.vectors[].id' "$RUNNER_TEMP/spec/$VECTOR_PATH/$file" | sort > "$RUNNER_TEMP/published.txt"
+
+            # Everything the scope file names in this section, and the covered
+            # subset of it. Section headers switch the awk flag; comments and
+            # blank lines fall out on their own.
+            awk -v want="[$section]" '
+              $1 == want          { on = 1; next }
+              /^\[/               { on = 0 }
+              on && /^[a-z0-9]/   { print $1, $2 }
+            ' "$scope" > "$RUNNER_TEMP/declared-raw.txt"
+
+            cut -d' ' -f1 "$RUNNER_TEMP/declared-raw.txt"          | sort > "$RUNNER_TEMP/declared.txt"
+            awk '$2 == "covered"      { print $1 }' "$RUNNER_TEMP/declared-raw.txt" | sort > "$RUNNER_TEMP/covered.txt"
+            awk '$2 == "out-of-scope" { print $1 }' "$RUNNER_TEMP/declared-raw.txt" | sort > "$RUNNER_TEMP/skipped.txt"
+
+            # Published but not declared: something new arrived. Fatal - that
+            # is the entire point of this job.
+            undeclared="$(comm -23 "$RUNNER_TEMP/published.txt" "$RUNNER_TEMP/declared.txt")"
+
+            # Declared but no longer published: renamed, withdrawn, or a typo
+            # in the scope file. Also fatal, and for a reason worth spelling
+            # out: a "covered" line pointing at an id that no longer exists
+            # means TOTPTest.kt pins a vector nobody upstream maintains any
+            # more, and the scope file would keep vouching for it forever.
+            vanished="$(comm -13 "$RUNNER_TEMP/published.txt" "$RUNNER_TEMP/declared.txt")"
+
+            printf '| `%s` | %s | %s | %s | %s | %s | %s |\n' \
+              "$section" \
+              "$(wc -l < "$RUNNER_TEMP/published.txt")" "$(wc -l < "$RUNNER_TEMP/declared.txt")" \
+              "$(wc -l < "$RUNNER_TEMP/covered.txt")"   "$(wc -l < "$RUNNER_TEMP/skipped.txt")" \
+              "$([ -n "$undeclared" ] && echo "**$(echo "$undeclared" | wc -l)**" || echo 0)" \
+              "$([ -n "$vanished" ]   && echo "**$(echo "$vanished"   | wc -l)**" || echo 0)" \
+              >> "$GITHUB_STEP_SUMMARY"
+
+            if [ -n "$undeclared" ]; then
+              status=1
+              {
+                echo
+                echo "### Undeclared in \`$section\`"
+                echo
+                echo 'Published, but `conformance-vector-scope.txt` does not mention them.'
+                echo 'Add a line for each - `covered` with a vector in `TOTPTest.kt`, or'
+                echo '`out-of-scope` with the reason it does not apply.'
+                echo
+                echo '```'
+                echo "$undeclared"
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::error::$section: undeclared vectors: $(echo "$undeclared" | tr '\n' ' ')"
+            fi
+
+            if [ -n "$vanished" ]; then
+              status=1
+              {
+                echo
+                echo "### Vanished from \`$section\`"
+                echo
+                echo 'Declared here, but no longer published - renamed, withdrawn, or misspelled.'
+                echo
+                echo '```'
+                echo "$vanished"
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::error::$section: vectors no longer published: $(echo "$vanished" | tr '\n' ' ')"
+            fi
+
+          done
+
+          exit $status
+
+  # ---------------------------------------------------------------------------
+  # Do the vectors we DO cover still expect what TOTP.kt computes?
+  #
+  # The job above compares id sets, which cannot see a vector whose id stayed
+  # while its expected output was corrected. That is the more dangerous drift
+  # of the two: it turns into tokens a CSMS rejects, silently, with a suite
+  # that stays green because it is checking against its own stale copy.
+  #
+  # UpstreamVectorTest reads the file written below and skips itself when it is
+  # absent, which is what happens in every other build. See its documentation
+  # for why the test does not simply fetch the vectors itself.
+  # ---------------------------------------------------------------------------
+  published-values:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: UTC
+
+    steps:
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Fetch the published vectors
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse "$SPEC_REPOSITORY" "$RUNNER_TEMP/spec"
+          git -C "$RUNNER_TEMP/spec" sparse-checkout set "$VECTOR_PATH"
+
+      # Only the generation vectors marked "covered", because those are exactly
+      # the ones this repository claims to implement. The out-of-scope ones
+      # would fail for reasons already written down, and turning a documented
+      # limitation into a nightly failure is how a red badge becomes wallpaper.
+      #
+      # Fields are not trimmed anywhere along the way: two vectors surround the
+      # shared secret and the alphabet with spaces on purpose, and @tsv
+      # preserves them. The data contains no tabs, which is what makes a
+      # separator this simple safe.
+      - name: Convert the covered vectors to TSV
+        run: |
+          awk '
+            $1 == "[generation]" { on = 1; next }
+            /^\[/                { on = 0 }
+            on && $2 == "covered" { print $1 }
+          ' app/src/test/resources/conformance-vector-scope.txt > "$RUNNER_TEMP/covered.txt"
+
+          jq -r --rawfile covered "$RUNNER_TEMP/covered.txt" '
+            ($covered | split("\n") | map(select(length > 0))) as $ids
+            | .vectors[]
+            | select(.id as $id | $ids | index($id))
+            | [ .id,
+                .input.sharedSecret,
+                (.input.unixTimestampMillis  | tostring),
+                (.input.validityTimeSeconds  // "" | tostring),
+                (.input.totpLength           // "" | tostring),
+                (.input.alphabet             // ""),
+                .expected.previous,
+                .expected.current,
+                .expected.next,
+                (.expected.remainingTimeSeconds | tostring)
+              ]
+            | @tsv
+          ' "$RUNNER_TEMP/spec/$VECTOR_PATH/totp-test-vectors.json" \
+            > app/src/test/resources/upstream-generation-vectors.tsv
+
+          declared=$(wc -l < "$RUNNER_TEMP/covered.txt")
+          written=$(wc -l < app/src/test/resources/upstream-generation-vectors.tsv)
+
+          {
+            echo "## Published values"
+            echo
+            echo "$written of $declared vectors declared \`covered\` were found upstream and will be run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # A mismatch here means an id in the scope file no longer exists
+          # upstream. declared-vectors reports that properly; failing here too
+          # would only produce a second red for one cause, so this is a note
+          # rather than an exit code - the test itself still fails if the file
+          # came out empty.
+          if [ "$written" -ne "$declared" ]; then
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Counts differ - see the `declared-vectors` job.' >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::$written of $declared covered vectors matched upstream"
+          fi
+
+      - name: Run the suite against the published values
+        run: ./gradlew testDebugUnitTest --tests 'cloud.charging.open.dynamicqrcodes.UpstreamVectorTest' --console=plain
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-published-values
+          path: |
+            app/build/reports/tests/**
+            app/build/test-results/**/*.xml
+          if-no-files-found: ignore

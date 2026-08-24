@@ -1,0 +1,195 @@
+name: Nightly
+
+# The counterpart to ci.yml. That workflow gates every push against the pinned
+# versions in gradle/libs.versions.toml - which means a day on which nobody
+# pushes is a day on which nobody notices that the world moved underneath us.
+# This one notices.
+#
+# What it deliberately does NOT do is repeat ci.yml. The unit suite is fully
+# deterministic - every conformance vector runs against a timestamp passed in
+# explicitly, nothing consults the wall clock - so a nightly repetition on the
+# same JDK could only ever reproduce the previous run. Each job below therefore
+# changes exactly one thing about the environment and asks whether the build
+# survives it.
+#
+# There is also no "fresh dependencies" job, which is what the JavaScript
+# repositories in this family put first. Their lock file can be deleted and the
+# ^-ranges re-resolved; this catalog pins every version exactly, so there is
+# nothing to re-resolve and such a job would be a no-op with a green tick on
+# it. dependency-report answers the same question honestly instead - by asking
+# the repositories what exists, without pretending to have tested it.
+#
+# Two things worth knowing about scheduled workflows: they only ever run on the
+# default branch, and GitHub disables them after 60 days without any repository
+# activity. If this stops reporting, that is the first thing to check - for a
+# small, essentially finished app, it WILL happen.
+on:
+  schedule:
+    # 03:11 UTC. Not on the hour: GitHub's scheduler is busiest then and delays
+    # runs by tens of minutes. Also clear of the sibling repositories' slots
+    # (02:43, 03:37, 04:13) and of vector-drift.yml at 04:41.
+    - cron: '11 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # "Was sollte noch geupgraded werden?" - answered every morning instead of
+  # whenever somebody thinks to ask.
+  #
+  # Informational on purpose, and it must stay that way: releases happen on
+  # Google's and Maven Central's schedule, not ours, and a badge that goes red
+  # because AndroidX shipped a minor is a badge that stops being read. The
+  # script never exits non-zero anyway; continue-on-error covers the case where
+  # a repository is unreachable.
+  # ---------------------------------------------------------------------------
+  dependency-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+
+    steps:
+
+      - uses: actions/checkout@v7
+
+      - name: What has a newer version
+        run: |
+          {
+            echo '## Dependency updates'
+            echo
+            bash ci/dependency-updates.sh --markdown
+            echo
+            echo 'Reported, not applied - see the header of `ci/dependency-updates.sh`'
+            echo 'for why bumping these unattended would be a bad idea.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # The pinned build on the newest JDK there is, months before anyone would
+  # think to try it. Fatal: when the toolchain breaks on the next Java, that is
+  # a real finding, not runner weather - and finding it in the nightly is far
+  # cheaper than finding it on the morning somebody upgrades their machine.
+  #
+  # compileOptions pins source and target compatibility to 17 regardless, so
+  # this changes the JVM the build RUNS on, not the bytecode it emits. That is
+  # the part that actually breaks: AGP, Gradle and the Kotlin compiler all
+  # inspect the JDK they are hosted by.
+  # ---------------------------------------------------------------------------
+  newest-jdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TZ: UTC
+
+    steps:
+
+      - uses: actions/checkout@v7
+
+      # 26 is the newest Temurin feature release; ci.yml builds on 21, which is
+      # the version the README calls verified. Raise this when 27 ships rather
+      # than tracking a moving "latest" - a nightly that silently changes what
+      # it tests cannot be bisected.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '26'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Java version
+        run: java -version
+
+      - name: Test, lint and assemble
+        run: ./gradlew test lint assembleRelease --console=plain
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-jdk26
+          path: |
+            app/build/reports/**
+            app/build/test-results/**/*.xml
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # The instrumented tests across the whole supported range, which ci.yml only
+  # covers at the floor. The reason this matters is specific rather than
+  # ceremonial: the one bug these tests exist for was a regular expression that
+  # the JVM accepted and Android's ICU rejected, and "which ICU" is a property
+  # of the platform version. A pattern that is fine on API 31 and rejected on
+  # API 37 would look exactly like the bug that already shipped.
+  # ---------------------------------------------------------------------------
+  instrumented:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      # One leg per platform generation, and one leg must not cancel the
+      # others: "red on exactly one API level" is the most valuable signal this
+      # matrix can produce.
+      fail-fast: false
+      matrix:
+        include:
+          - api-level: 31           # minSdk
+            target: aosp_atd
+            experimental: false
+          - api-level: 34           # the most widely installed generation
+            target: aosp_atd
+            experimental: false
+          - api-level: 37           # targetSdk, Android 17
+            # No ATD image for this generation yet, so the full google_apis
+            # image it is - slower to boot, but the alternative is not testing
+            # the level the app actually targets.
+            target: google_apis
+            # Experimental until this image has proven it boots dependably on a
+            # runner. Android 17 shipped weeks ago; an emulator that cannot
+            # start is a fact about Google's image of the day, not about this
+            # app, and it must not be able to turn the night red. Flip this to
+            # false once a few weeks of green have earned it.
+            experimental: true
+
+    steps:
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Instrumented tests (API ${{ matrix.api-level }})
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest --console=plain
+
+      - name: Upload reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-instrumented-api${{ matrix.api-level }}
+          path: |
+            app/build/reports/androidTests/**
+            app/build/outputs/androidTest-results/**
+          if-no-files-found: ignore
