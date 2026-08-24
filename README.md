@@ -137,7 +137,7 @@ of bug that local unit tests structurally cannot catch.
 
 **[Nightly](.github/workflows/nightly.yml)** changes one thing about the
 environment at a time: the build on the newest JDK there is, the instrumented
-tests across API 31, 34 and 37, and a report of what has a newer version. That
+tests across API 31, 34 and 36, and a report of what has a newer version. That
 last one is equally useful locally and needs nothing but curl:
 
 ```

@@ -144,16 +144,29 @@ jobs:
           - api-level: 34           # the most widely installed generation
             target: aosp_atd
             experimental: false
+          - api-level: 36           # the highest level the tooling can reach
+            target: aosp_atd
+            experimental: false
           - api-level: 37           # targetSdk, Android 17
-            # No ATD image for this generation yet, so the full google_apis
-            # image it is - slower to boot, but the alternative is not testing
-            # the level the app actually targets.
             target: google_apis
-            # Experimental until this image has proven it boots dependably on a
-            # runner. Android 17 shipped weeks ago; an emulator that cannot
-            # start is a fact about Google's image of the day, not about this
-            # app, and it must not be able to turn the night red. Flip this to
-            # false once a few weeks of green have earned it.
+            # Cannot currently work, and not because the image is flaky.
+            #
+            # The action installs packages through the classic sdkmanager,
+            # which resolves them from Google's legacy package indexes - and
+            # those stop at API 36. platforms;android-37 appears only in
+            # repository2-3.xml, one revision beyond what the runner's
+            # cmdline-tools reads, so the install fails with "Failed to find
+            # package 'platforms;android-37'". The system image is worse off
+            # still: API 37 is absent from every sys-img2-1..2-5.xml. It is
+            # distributed exclusively through the new "android sdk" CLI, which
+            # has its own index and which this action does not use.
+            #
+            # So this leg is not waiting for a few green weeks - waiting alone
+            # will not fix it. It unblocks when android-emulator-runner adopts
+            # the new CLI, or when Google backfills the legacy indexes. Keeping
+            # it here experimental makes it the canary that says when that
+            # happened; the API 36 leg above carries the real coverage near the
+            # target in the meantime.
             experimental: true
 
     steps:
