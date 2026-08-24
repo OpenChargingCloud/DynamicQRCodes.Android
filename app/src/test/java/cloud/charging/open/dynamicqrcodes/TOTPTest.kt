@@ -232,4 +232,89 @@ class TOTPTest {
 
     }
 
+    /**
+     * One declared line of conformance-vector-scope.txt.
+     */
+    private data class ScopeEntry(
+        val id:       String,
+        val section:  String,
+        val covered:  Boolean,
+        val reason:   String
+    )
+
+    private fun readScope(): List<ScopeEntry> {
+
+        val stream = javaClass.getResourceAsStream("/conformance-vector-scope.txt")
+                         ?: throw AssertionError("conformance-vector-scope.txt is not on the test classpath!")
+
+        var section = ""
+
+        return stream.bufferedReader().useLines { lines ->
+            lines.map       { it.trim() }
+                 .filter    { it.isNotEmpty() && !it.startsWith("#") }
+                 .mapNotNull { line ->
+
+                     if (line.startsWith("[")) {
+                         section = line.trim('[', ']')
+                         return@mapNotNull null
+                     }
+
+                     val fields = line.split(Regex("""\s+"""))
+
+                     ScopeEntry(fields[0],
+                                section,
+                                fields[1] == "covered",
+                                fields.drop(2).joinToString(" "))
+
+                 }
+                 .toList()
+        }
+
+    }
+
+    /**
+     * The vectors above are a subset of the published suite, and
+     * conformance-vector-scope.txt is where that subset is justified. This
+     * test is what stops the two from drifting apart: a vector pinned here but
+     * not declared there, or declared "covered" there but not actually pinned
+     * here, fails the build.
+     *
+     * It says nothing about whether the scope file matches the *specification*
+     * - it cannot, since the specification is not in this repository.
+     * .github/workflows/vector-drift.yml answers that half nightly, and this
+     * test is what makes its answer meaningful: without it, "the scope file
+     * knows every published id" would be a statement about a file nobody
+     * checks against the code.
+     */
+    @Test
+    fun scopeFileAgreesWithThePinnedVectors() {
+
+        val scope = readScope()
+
+        assertEquals("sections in conformance-vector-scope.txt",
+                     listOf("generation", "invalid-inputs"),
+                     scope.map { it.section }.distinct().sorted())
+
+        assertEquals("duplicate ids in conformance-vector-scope.txt",
+                     emptyList<String>(),
+                     scope.groupBy  { it.section + "/" + it.id }
+                          .filterValues { it.size > 1 }
+                          .keys.sorted())
+
+        // An out-of-scope line without a reason is the thing this file exists
+        // to prevent: a skip nobody has to justify is a skip nobody revisits.
+        assertEquals("out-of-scope entries without a reason",
+                     emptyList<String>(),
+                     scope.filter { !it.covered && it.reason.isBlank() }.map { it.id }.sorted())
+
+        assertEquals("[generation] declared covered vs. pinned above",
+                     scope.filter { it.section == "generation" && it.covered }.map { it.id }.sorted(),
+                     vectors.map { it.id }.sorted())
+
+        assertEquals("[invalid-inputs] declared covered vs. pinned above",
+                     scope.filter { it.section == "invalid-inputs" && it.covered }.map { it.id }.sorted(),
+                     invalidInputs.map { it.id }.sorted())
+
+    }
+
 }

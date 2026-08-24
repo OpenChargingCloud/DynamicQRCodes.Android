@@ -1,0 +1,124 @@
+# Coverage of the shared TOTP conformance vectors
+# ===============================================
+#
+# The vectors are maintained in the specification, not here:
+#
+#   https://github.com/OpenChargingTechnology/Whitepapers
+#     TimeBasedOneTimePasswords/test-vectors/totp-test-vectors.json     [generation]
+#     TimeBasedOneTimePasswords/test-vectors/totp-invalid-inputs.json   [invalid-inputs]
+#
+# TOTPTest.kt pins a subset of them as Kotlin literals. That subset is smaller
+# than the upstream suite, for reasons that are perfectly good but were, until
+# this file existed, written down nowhere: they lived in prose in the README
+# and in the heads of whoever had last looked. A missing vector and a
+# deliberately skipped one were indistinguishable, so nobody could tell whether
+# a newly published vector had been considered and rejected or simply never
+# noticed.
+#
+# This file is that distinction, and two things enforce it:
+#
+#   * TOTPTest.scopeFileAgreesWithThePinnedVectors runs in every build and
+#     fails when a vector is pinned but not declared here, or declared
+#     "covered" but not actually pinned.
+#   * .github/workflows/vector-drift.yml runs nightly against the published
+#     specification and fails when it contains an id this file does not
+#     mention at all - which is precisely the case that used to be invisible.
+#
+# So: adding a vector to TOTPTest.kt means adding a line here. Deciding NOT to
+# add one means adding a line here too, with the reason. There is no third
+# option that keeps the build green, and that is the entire point.
+#
+# Format, whitespace separated:
+#
+#   <id>  covered
+#   <id>  out-of-scope  <reason-tag>  <prose>
+#
+# Reason tags in use:
+#
+#   hash-algorithm       The vector selects SHA-384 or SHA-512. TOTP.kt
+#                        implements OCPP 2.1 C25 "TOTP algorithm, version 1",
+#                        which is HMAC-SHA256 and nothing else; there is no
+#                        hash parameter to pass. Should C25 ever gain a
+#                        version 2, these are the vectors it would arrive with.
+#
+#   tls-channel-binding  The vector carries tlsExporterMaterialHex and is
+#                        marked requires: ["tlsChannelBinding"] upstream. The
+#                        app never terminates a TLS connection of its own - it
+#                        builds a URL and reads one back - so there is no
+#                        exporter material for it to bind to. This is the one
+#                        exclusion the vector file itself declares, so a
+#                        harness may skip it and still call itself conformant.
+#
+#   unrepresentable      The vector feeds in a value the Kotlin signature
+#                        cannot express: UInt has no fractional and no negative
+#                        values, so the compiler rejects the call before TOTP
+#                        could reject the argument. The C# harness notes the
+#                        same thing about its own API. Nothing to test - the
+#                        type system already answered.
+#
+#   no-hash-parameter    The vector asserts that a weak hash is refused.
+#                        generateTOTPs takes no hash argument, so SHA-1 and MD5
+#                        cannot be requested in the first place. Untestable for
+#                        the same reason it cannot happen.
+
+[generation]
+
+defaults-slot-boundary               covered
+defaults-mid-slot                    covered
+length-23                            covered
+alphabet-decimal                     covered
+validity-60                          covered
+sha384-defaults                      out-of-scope  hash-algorithm       hashAlgorithm: sha384
+sha512-defaults                      out-of-scope  hash-algorithm       hashAlgorithm: sha512
+epoch-previous-slot-wraps            covered
+length-64-sha256-ring-buffer         covered
+length-6-decimal                     covered
+length-min-4                         covered
+length-max-255                       out-of-scope  hash-algorithm       hashAlgorithm: sha512
+length-33-sha256                     covered
+length-48-sha384                     out-of-scope  hash-algorithm       hashAlgorithm: sha384
+length-64-sha512                     out-of-scope  hash-algorithm       hashAlgorithm: sha512
+alphabet-min-4                       covered
+alphabet-hex                         covered
+alphabet-base32                      covered
+alphabet-base64url                   covered
+validity-1                           covered
+validity-5                           covered
+validity-7                           covered
+validity-86400                       covered
+remaining-1-second                   covered
+milliseconds-floor                   covered
+milliseconds-floor-slot-edge         covered
+timestamp-y2038                      covered
+timestamp-year-9999                  covered
+secret-utf8                          covered
+secret-64-chars                      covered
+secret-surrounding-whitespace        covered
+alphabet-surrounding-whitespace      covered
+ocpp-v1-length-8                     covered
+ocpp-v1-min-profile                  covered
+all-parameters-custom                out-of-scope  hash-algorithm       hashAlgorithm: sha384, the only exclusion here that also varies everything else
+tls-binding-sha256                   out-of-scope  tls-channel-binding  requires: ["tlsChannelBinding"]
+tls-binding-sha512                   out-of-scope  tls-channel-binding  requires: ["tlsChannelBinding"]
+tls-binding-short-material           out-of-scope  tls-channel-binding  requires: ["tlsChannelBinding"]
+
+[invalid-inputs]
+
+secret-empty                         covered
+secret-whitespace-only               covered
+secret-too-short                     covered
+secret-inner-whitespace              covered
+length-3                             covered
+length-256                           covered
+length-fractional                    out-of-scope  unrepresentable      totpLength is UInt
+validity-zero                        covered
+validity-negative                    out-of-scope  unrepresentable      validityTime is UInt
+validity-fractional                  out-of-scope  unrepresentable      validityTime is UInt
+timestamp-negative                   covered
+hash-sha1                            out-of-scope  no-hash-parameter    generateTOTPs takes no hash argument
+hash-md5                             out-of-scope  no-hash-parameter    generateTOTPs takes no hash argument
+alphabet-empty                       covered
+alphabet-whitespace-only             covered
+alphabet-3-chars                     covered
+alphabet-duplicates                  covered
+alphabet-inner-whitespace            covered
