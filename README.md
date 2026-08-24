@@ -1,4 +1,4 @@
-# Dynamic QR-Codes for Android
+# Secure Dynamic QR-Codes for Android
 
 <img src="images/play-store-icon-512.png" alt="" width="96" align="right" />
 
@@ -117,5 +117,4 @@ without touching the repository, set `org.gradle.java.home` in your personal
 
 Copyright 2024-2026 GraphDefined GmbH
 
-Licensed under the Apache License, Version 2.0; see [LICENSE](LICENSE). The
-same license as the sibling implementations of this algorithm.
+Licensed under the [Apache License, Version 2.0](LICENSE)
