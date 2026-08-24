@@ -102,8 +102,9 @@ gradlew.bat connectedAndroidTest
 
 ## Building
 
-Requires JDK 17 or newer; the build is verified with JDK 21. The Gradle wrapper
-brings its own Gradle.
+Requires JDK 17 or newer. CI builds on JDK 21 and the nightly repeats the whole
+build on JDK 26, so both ends of that range are verified continuously. The
+Gradle wrapper brings its own Gradle.
 
 Run the unit tests:
 
