@@ -18,6 +18,9 @@ That makes it useful for testing a CSMS, for demonstrating the mechanism, and
 for checking a charging station's configuration against a reference
 implementation.
 
+[You can download it now from the Google PlayStore](https://play.google.com/store/apps/details?id=cloud.charging.open.dynamicqrcodes)
+
+
 ## Features
 
 **As a Charging Station**
@@ -46,6 +49,7 @@ for checking the scanner by hand.
 The line below the scan button names the build that is running - version, git
 revision and the moment it was installed - because the version alone cannot
 tell a store release from a local build. A long press copies it.
+
 
 ## The TOTP algorithm
 
@@ -76,6 +80,7 @@ exercises the URL template where the app actually runs:
 gradlew.bat connectedAndroidTest
 ```
 
+
 ## Building
 
 Requires JDK 17 or newer; the build is verified with JDK 21. The Gradle wrapper
@@ -98,10 +103,12 @@ The Gradle build picks the JDK up from `JAVA_HOME`. To pin a specific JDK
 without touching the repository, set `org.gradle.java.home` in your personal
 `~/.gradle/gradle.properties`.
 
+
 ## Requirements
 
 * Android 12 (API 31) or newer
-* A camera, only for scanning QR codes
+* A camera, only for scanning and validating QR-Codes
+
 
 ## License
 
