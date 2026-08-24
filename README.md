@@ -6,15 +6,18 @@
 [![Nightly](https://github.com/OpenChargingCloud/DynamicQRCodes.Android/actions/workflows/nightly.yml/badge.svg)](https://github.com/OpenChargingCloud/DynamicQRCodes.Android/actions/workflows/nightly.yml)
 [![Vector drift](https://github.com/OpenChargingCloud/DynamicQRCodes.Android/actions/workflows/vector-drift.yml/badge.svg)](https://github.com/OpenChargingCloud/DynamicQRCodes.Android/actions/workflows/vector-drift.yml)
 
-An Android app for generating the **Secure Dynamic QR-Code URLs** used for *Ad hoc
-payment at charging stations*, as defined by OCPP 2.1 (Edition 2), use case
-**C25 — Ad hoc payment via a QR code**.
+An Android app for generating the **Secure Dynamic QR-Code URLs** used for *"Ad hoc
+payment at charging stations"*, as defined by [OCPP v2.1 (Edition 2)](https://openchargealliance.org/protocols/open-charge-point-protocol/#ExploreOCPP2.1), use case
+**C25: Ad hoc payment via a QR code**.
 
 A static QR-Code sticker on a charging station can be replaced by a fraudulent
-one pointing at a fake payment site. A secure dynamic QR-Code prevents this: the URL
-carries a time-based one-time password derived from a shared secret known only
+one pointing at a **fake payment site**. A secure dynamic QR-Code prevents this: the URL
+carries a *Time-Based One-Time Password (TOTP)* derived from a *shared secret* known only
 to the Charging Station and the CSMS, so a scanned URL can be proven authentic
-and expires within seconds.
+and expires within seconds. Additionally the TOTP protects the CSMS from fraudulent
+requests and **Distributed Denial-of-Service (DDoS) attacks**, as it acts as a
+***proof-of-presence*** **of the EV driver** sending this request to really be currently in
+front of the specified charging station.
 
 This app covers both ends of that exchange interactively: it builds the URL the
 way a Charging Station does, and it checks a scanned one the way a CSMS does.
