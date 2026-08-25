@@ -1,4 +1,15 @@
 <resources>
     <!-- A verdict colour, since Material 3 has no semantic "success" role. -->
     <color name="totpValid">#1B7F3B</color>
+
+    <!-- The surface the generated code sits on. Plain white here rather than
+         a tonal container, so that the quiet zone the bitmap carries has
+         nothing to contrast against and the group reads as one sheet of paper
+         instead of a white box inside a grey one. Held apart from the page by
+         the card's outline rather than by its fill.
+
+         Literal values because this app does not opt into dynamic colour, so
+         the palette is the Material 3 baseline and will not move underneath
+         them. -->
+    <color name="resultCard">#FFFFFFFF</color>
 </resources>

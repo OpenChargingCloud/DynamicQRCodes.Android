@@ -1,3 +1,11 @@
 <resources>
     <color name="totpValid">#7BD98F</color>
+
+    <!-- Not white here. A white card would have to carry dark text in a dark
+         theme, which means overriding every colour inside it, and a sheet of
+         white that size at night is unkind. The code keeps its own white
+         patch - it has to, a scanner wants dark on light - and against this
+         container that reads as deliberate rather than as an accident.
+         Material 3 baseline dark, surface container highest. -->
+    <color name="resultCard">#FF36343B</color>
 </resources>

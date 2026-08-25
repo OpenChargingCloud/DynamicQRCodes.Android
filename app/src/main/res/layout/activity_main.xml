@@ -197,10 +197,11 @@
                 android:textColor="?android:attr/textColorSecondary" />
 
             <com.google.android.material.card.MaterialCardView
-                style="@style/Widget.Material3.CardView.Filled"
+                style="@style/Widget.Material3.CardView.Outlined"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                app:cardBackgroundColor="@color/resultCard"
                 app:cardCornerRadius="16dp">
 
                 <LinearLayout
