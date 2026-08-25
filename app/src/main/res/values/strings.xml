@@ -1,5 +1,8 @@
 <resources>
+    <!-- Short, because the launcher draws this under the icon and truncates
+         anything longer. The full product name is the toolbar title below. -->
     <string name="app_name">DynamicQRCodes</string>
+    <string name="appTitle">Secure Dynamic QR-Codes</string>
 
     <!-- Input labels -->
     <string name="timestamp">Timestamp</string>

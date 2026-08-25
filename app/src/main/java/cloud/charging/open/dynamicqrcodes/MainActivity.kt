@@ -111,6 +111,13 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
+        // The full name belongs here rather than in android:label. A launcher
+        // draws the ACTIVITY label under the icon and only falls back to the
+        // application one, so labelling this activity - it carries the
+        // LAUNCHER intent filter - would put "Secure Dynamic QR-Codes" on the
+        // home screen, where it does not fit.
+        supportActionBar?.setTitle(R.string.appTitle)
+
         applyWindowInsets()
 
         resultColor = binding.resultingURL.currentTextColor
