@@ -96,8 +96,9 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
-    // Only the decoder: the camera side of zxing-android-embedded was built on
-    // Camera1 and last released in 2021, CameraX above replaces it.
+    // Encoder and decoder both, but no camera: the camera side of
+    // zxing-android-embedded was built on Camera1 and last released in 2021,
+    // CameraX above replaces it.
     implementation(libs.zxing.core)
 
     testImplementation(libs.junit)

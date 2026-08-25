@@ -10,7 +10,7 @@ material = "1.14.0"
 constraintlayout = "2.2.2"
 activity = "1.13.0"
 camerax = "1.6.1"
-# Only the decoder of zxing is used; the camera comes from CameraX.
+# zxing writes and reads the codes; the camera comes from CameraX.
 zxingCore = "3.5.4"
 
 [libraries]

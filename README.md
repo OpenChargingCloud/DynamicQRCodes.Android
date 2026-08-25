@@ -34,9 +34,12 @@ implementation.
 
 * Generate a secure dynamic QR-Code URL from a configurable URL template,
   EVSE ID, shared secret, validity time, TOTP length and alphabet
+* Show that URL as the QR-Code a driver would scan, re-drawn whenever the
+  time slot turns over; a long press on the URL beneath it copies it
 * A running and syncing a clock against legal time servers, to inspect
   the URL of any given moment
-* Live display of the remaining validity of the current time slot
+* Live display of the remaining validity of the current time slot, as a bar
+  that drains and as the seconds below it
 
 **As a CSMS**
 

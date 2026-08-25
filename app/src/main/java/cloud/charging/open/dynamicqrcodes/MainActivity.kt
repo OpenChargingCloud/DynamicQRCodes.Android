@@ -31,8 +31,10 @@ import android.util.Log
 import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
@@ -58,6 +60,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val buildInfoFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+
+    /**
+     * The URL currently on display, or null while the field below the QR code
+     * is showing an input error instead. Doubles as the cache key of the
+     * rendered code: this runs once a second, but the URL only changes when
+     * the time slot does.
+     */
+    private var currentURL: String? = null
 
     private var resultColor      = 0
     private val errorColor by lazy {
@@ -155,6 +165,16 @@ class MainActivity : AppCompatActivity() {
 
         updateResultingURL()
 
+        binding.resultingURL.setOnLongClickListener {
+            // Nothing worth copying while an error message stands here, and
+            // returning false then leaves the gesture unhandled rather than
+            // pretending it did something.
+            val url = currentURL
+            if (url != null)
+                copyToClipboard(url, R.string.resultingURLCopied)
+            url != null
+        }
+
         showBuildInfo()
 
         // The camera is optional: generating URLs works without one.
@@ -190,19 +210,24 @@ class MainActivity : AppCompatActivity() {
                                            buildInfoFormat.format(Date(packageInfo.lastUpdateTime)))
 
         binding.buildInfo.setOnLongClickListener {
-
-            getSystemService(ClipboardManager::class.java)
-                .setPrimaryClip(ClipData.newPlainText(getString(R.string.app_name),
-                                                      binding.buildInfo.text))
-
-            // Android 13 and up confirm a copy themselves, so a toast on top
-            // of that would only be saying it twice.
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-                Toast.makeText(this, R.string.buildInfoCopied, Toast.LENGTH_SHORT).show()
-
+            copyToClipboard(binding.buildInfo.text, R.string.buildInfoCopied)
             true
-
         }
+
+    }
+
+    /**
+     * Put [text] on the clipboard and confirm it with [confirmation] - except
+     * on Android 13 and up, which shows a confirmation of its own and would
+     * otherwise be saying it twice.
+     */
+    private fun copyToClipboard(text: CharSequence, @StringRes confirmation: Int) {
+
+        getSystemService(ClipboardManager::class.java)
+            .setPrimaryClip(ClipData.newPlainText(getString(R.string.app_name), text))
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+            Toast.makeText(this, confirmation, Toast.LENGTH_SHORT).show()
 
     }
 
@@ -287,16 +312,67 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val remainingTime = totp.remainingTime.toInt()
+        showURL(binding.urlTemplate.text.toString()
+                       .replace("{evseId}", binding.evseId.text.toString())
+                       .replace("{totp}",   totp.current))
+
+        showRemainingValidity(totp.remainingTime.toInt(), validityTime.toInt())
+
+    }
+
+    /**
+     * Show [url] as text, and as the QR code above it.
+     *
+     * The code is only re-encoded when the URL actually changed. Called once
+     * per second while the clock runs, and the TOTP within it turns over only
+     * once per time slot, so most calls have nothing to do.
+     */
+    private fun showURL(url: String) {
 
         binding.resultingURL.setTextColor(resultColor)
-        binding.resultingURL.text  = binding.urlTemplate.text.toString()
-                                            .replace("{evseId}", binding.evseId.text.toString())
-                                            .replace("{totp}",   totp.current)
+        binding.resultingURL.text = url
 
-        binding.remainingTime.text = resources.getQuantityString(R.plurals.remaining_time,
-                                                                 remainingTime,
-                                                                 remainingTime)
+        if (url == currentURL)
+            return
+
+        currentURL = url
+
+        // One pixel per module, so the scaling happens here - and it has to
+        // happen without interpolation, or the module edges blur into grey
+        // and the code stops decoding.
+        val bitmap = QRCodeGenerator.bitmap(url)
+
+        binding.qrCode.setImageDrawable(
+            bitmap?.toDrawable(resources)?.apply { isFilterBitmap = false }
+        )
+
+        // A URL too long for the largest QR version leaves the text standing
+        // on its own rather than showing an empty frame.
+        binding.qrCode.isVisible = bitmap != null
+
+    }
+
+    /**
+     * Count the current time slot down: the bar drains from full to nearly
+     * empty, the label below it says the same thing in seconds.
+     *
+     * [remainingTime] runs from [validityTime] down to 1, so the bar is scaled
+     * in seconds rather than in percent - no rounding, and each tick moves it
+     * by exactly one step.
+     */
+    private fun showRemainingValidity(remainingTime: Int, validityTime: Int) {
+
+        val bar         = binding.remainingValidityBar
+        val sameSlotLength = bar.max == validityTime
+
+        bar.max = validityTime
+
+        // Animated while the slot drains, but not when it refills: sliding the
+        // bar back up to full reads as a rewind rather than as a fresh start.
+        bar.setProgressCompat(remainingTime,
+                              sameSlotLength && remainingTime < bar.progress)
+
+        binding.remainingTime.text = getString(R.string.remainingSeconds, remainingTime)
 
     }
 
@@ -390,9 +466,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showError(message: String) {
+
         binding.resultingURL.setTextColor(errorColor)
         binding.resultingURL. text = message
         binding.remainingTime.text = ""
+
+        // There is no URL, so there is nothing to encode and nothing to copy.
+        currentURL                = null
+        binding.qrCode.isVisible  = false
+        binding.remainingValidityBar.setProgressCompat(0, false)
+
     }
 
     private fun generateRandomSecret(length: Int): String {

@@ -20,11 +20,11 @@
 
     <!-- Results -->
     <string name="resultingURLPlaceholder">Resulting URL…</string>
-    <string name="remainingTimePlaceholder">Remaining time…</string>
-    <plurals name="remaining_time">
-        <item quantity="one">Remaining Time: %1$d sec</item>
-        <item quantity="other">Remaining Time: %1$d secs</item>
-    </plurals>
+    <string name="qrCodeDescription">QR code of the resulting URL</string>
+    <string name="resultingURLCopied">URL copied</string>
+    <string name="remainingValidity">Remaining validity</string>
+    <!-- "s" is the SI symbol for second and does not pluralise. -->
+    <string name="remainingSeconds">%1$d s</string>
 
     <!-- QR code scanner -->
     <string name="scanQRCode">Scan QR Code</string>
