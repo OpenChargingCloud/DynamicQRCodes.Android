@@ -105,18 +105,28 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Shared Secret Input -->
+            <!-- Shared Secret Input. The one field here that is actually a
+                 secret, so it is masked, with Material's own eye button to
+                 reveal it - which is needed often, because this is the value
+                 somebody has to carry over to the CSMS by hand.
+
+                 Kept out of autofill: it looks like a password to the
+                 framework but belongs to a charging station rather than to an
+                 account, and a password manager offering to save it would be
+                 both useless and slightly alarming. -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="@string/sharedSecret">
+                android:hint="@string/sharedSecret"
+                app:endIconMode="password_toggle">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/sharedSecret"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text" />
+                    android:importantForAutofill="no"
+                    android:inputType="textPassword" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
