@@ -54,6 +54,10 @@ class MainActivity : AppCompatActivity() {
     private val updateInterval   = 1000L // 1 second
     private val secureRandom     = SecureRandom()
 
+    // Formatted in the time zone of this device, which is what "use device
+    // time" offers to the person reading it. The TOTP underneath is derived
+    // from the Unix timestamp and is therefore UTC either way - moving the
+    // phone to another zone changes this field and not a single token.
     private val timestampFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
         // Reject "2024-99-99" instead of rolling it over into a valid date.
         isLenient = false
@@ -77,7 +81,7 @@ class MainActivity : AppCompatActivity() {
 
     private val updateTimestampTask = object : Runnable {
         override fun run() {
-            if (binding.autoUpdateSwitch.isChecked) {
+            if (binding.useDeviceTimeSwitch.isChecked) {
                 binding.timestamp.setText(timestampFormat.format(Date()))
                 handler.postDelayed(this, updateInterval)
             }
@@ -122,19 +126,19 @@ class MainActivity : AppCompatActivity() {
 
         resultColor = binding.resultingURL.currentTextColor
 
-        binding.autoUpdateSwitch.setOnCheckedChangeListener { _, isChecked ->
+        binding.useDeviceTimeSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked)
                 handler.post(updateTimestampTask)
             else
                 handler.removeCallbacks(updateTimestampTask)
         }
 
-        binding.autoUpdateSwitch.isChecked = true
+        binding.useDeviceTimeSwitch.isChecked = true
 
         binding.timestamp.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 // Editing the timestamp by hand stops the clock.
-                binding.autoUpdateSwitch.isChecked = false
+                binding.useDeviceTimeSwitch.isChecked = false
                 handler.removeCallbacks(updateTimestampTask)
                 // Call performClick to ensure proper accessibility behavior
                 view.performClick()

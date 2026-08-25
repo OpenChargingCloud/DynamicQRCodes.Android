@@ -6,7 +6,10 @@
 
     <!-- Input labels -->
     <string name="timestamp">Timestamp</string>
-    <string name="autoUpdate">Auto update</string>
+    <!-- The switch that keeps the timestamp above in step with the clock of
+         this device. Off means the field holds whatever was typed into it,
+         which is what makes a scan reproducible. -->
+    <string name="useDeviceTime">Use device time</string>
     <string name="urlTemplate">URL Template</string>
     <string name="evseId">EVSE ID</string>
     <string name="sharedSecret">Shared Secret</string>

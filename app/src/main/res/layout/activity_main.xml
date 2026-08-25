@@ -51,23 +51,23 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Auto Update Input -->
+            <!-- Use Device Time Input -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <TextView
-                    android:id="@+id/autoUpdateLabel"
+                    android:id="@+id/useDeviceTimeLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/autoUpdate"
-                    android:labelFor="@+id/autoUpdateSwitch"
+                    android:text="@string/useDeviceTime"
+                    android:labelFor="@+id/useDeviceTimeSwitch"
                     android:layout_centerVertical="true"
                     android:layout_marginEnd="16dp"
-                    android:layout_toStartOf="@+id/autoUpdateSwitch" />
+                    android:layout_toStartOf="@+id/useDeviceTimeSwitch" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/autoUpdateSwitch"
+                    android:id="@+id/useDeviceTimeSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
