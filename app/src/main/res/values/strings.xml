@@ -48,8 +48,12 @@
     <string name="scannedEvseIdDiffers">EVSE ID: %1$s (differs from the configured one)</string>
     <string name="scanNoTemplateMatch">The scanned URL does not match the URL template!</string>
 
-    <!-- Which build is running: version, git revision, installation time -->
-    <string name="buildInfo">%1$s (%2$d) · %3$s · installed %4$s</string>
+    <!-- Which build is running: version, git revision, and when this build
+         landed on the device. "updated" rather than "installed" because the
+         value behind it is PackageInfo.lastUpdateTime, which moves on every
+         reinstall - which is the whole point, since a build that never
+         arrived is exactly what this line exists to reveal. -->
+    <string name="buildInfo">%1$s (%2$d) · %3$s · updated %4$s</string>
 
     <string name="buildInfoCopied">Build info copied to the clipboard</string>
 
