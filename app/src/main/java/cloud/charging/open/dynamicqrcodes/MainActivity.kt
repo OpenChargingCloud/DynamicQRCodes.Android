@@ -362,8 +362,10 @@ class MainActivity : AppCompatActivity() {
         )
 
         // A URL too long for the largest QR version leaves the text standing
-        // on its own rather than showing an empty frame.
-        binding.qrCode.isVisible = bitmap != null
+        // on its own rather than showing an empty frame - and the divider goes
+        // with the code, or the card would open with a rule across nothing.
+        binding.qrCode.isVisible        = bitmap != null
+        binding.qrCodeDivider.isVisible = bitmap != null
 
     }
 
@@ -487,8 +489,9 @@ class MainActivity : AppCompatActivity() {
         binding.remainingTime.text = ""
 
         // There is no URL, so there is nothing to encode and nothing to copy.
-        currentURL                = null
-        binding.qrCode.isVisible  = false
+        currentURL                      = null
+        binding.qrCode.isVisible        = false
+        binding.qrCodeDivider.isVisible = false
         binding.remainingValidityBar.setProgressCompat(0, false)
 
     }

@@ -175,71 +175,114 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- The result in the order a driver meets it: the QR code on the
-                 charging station first, then the URL it carries.
+            <!-- Everything the app produces, in one group under one
+                 heading. Loose views on the page background read as more of
+                 the form above them; a filled card says "this is the answer,
+                 not another thing to fill in". Inside it the order a driver
+                 meets things: the code on the charging station, the URL it
+                 carries, then how much longer that URL holds.
 
-                 Hidden until there is something to encode, which is also what
-                 happens when the input goes invalid - MainActivity puts the
-                 error message in the URL field below, and a stale code above
-                 an error message would be the one thing worse than no code. -->
-            <ImageView
-                android:id="@+id/qrCode"
-                android:layout_width="240dp"
-                android:layout_height="240dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="16dp"
-                android:padding="8dp"
-                android:background="@drawable/qr_code_background"
-                android:contentDescription="@string/qrCodeDescription"
-                android:scaleType="fitCenter"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
-            <!-- Resulting URL Field. Not selectable any more: a long press
-                 copies the whole URL, and text selection would claim that
-                 same gesture for itself. -->
+                 The QR code and the divider under it disappear together when
+                 the input goes invalid - MainActivity puts the error message
+                 where the URL was, and a stale code above an error message
+                 would be the one thing worse than no code. -->
             <TextView
-                android:id="@+id/resultingURL"
+                android:id="@+id/generatedURLHeading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:padding="8dp"
-                android:text="@string/resultingURLPlaceholder"
-                android:textSize="16sp"
-                android:textColor="?attr/colorPrimary"
-                android:textAlignment="center" />
+                android:layout_marginTop="32dp"
+                android:layout_marginStart="4dp"
+                android:text="@string/generatedURL"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
+                android:textColor="?android:attr/textColorSecondary" />
 
-            <!-- Remaining validity: the label, a bar that empties as the time
-                 slot runs out, and below it the seconds this used to show as
-                 a sentence. -->
-            <TextView
-                android:id="@+id/remainingValidityLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/remainingValidity"
-                android:textSize="16sp"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textAlignment="center" />
-
-            <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/remainingValidityBar"
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Material3.CardView.Filled"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                app:trackCornerRadius="4dp"
-                app:trackThickness="8dp"
-                tools:progress="70" />
+                app:cardCornerRadius="16dp">
 
-            <TextView
-                android:id="@+id/remainingTime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textSize="16sp"
-                android:textColor="?attr/colorPrimary"
-                android:textAlignment="center"
-                tools:text="7 s" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:id="@+id/qrCode"
+                        android:layout_width="300dp"
+                        android:layout_height="300dp"
+                        android:layout_gravity="center_horizontal"
+                        android:padding="10dp"
+                        android:background="@drawable/qr_code_background"
+                        android:contentDescription="@string/qrCodeDescription"
+                        android:scaleType="fitCenter"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:id="@+id/qrCodeDivider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                    <!-- Not selectable any more: a long press copies the whole
+                         URL, and text selection would claim that same gesture
+                         for itself. -->
+                    <TextView
+                        android:id="@+id/resultingURL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
+                        android:text="@string/resultingURLPlaceholder"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorPrimary"
+                        android:textAlignment="center" />
+
+                    <com.google.android.material.divider.MaterialDivider
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp" />
+
+                    <!-- Remaining validity: the label, a bar that empties as
+                         the time slot runs out, and below it the seconds. -->
+                    <TextView
+                        android:id="@+id/remainingValidityLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/remainingValidity"
+                        android:textSize="16sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textAlignment="center" />
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/remainingValidityBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:trackCornerRadius="4dp"
+                        app:trackThickness="8dp"
+                        tools:progress="70" />
+
+                    <TextView
+                        android:id="@+id/remainingTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:textSize="16sp"
+                        android:textColor="?attr/colorPrimary"
+                        android:textAlignment="center"
+                        tools:text="7 s" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Verdict of the last scan, filled in by MainActivity -->
             <TextView

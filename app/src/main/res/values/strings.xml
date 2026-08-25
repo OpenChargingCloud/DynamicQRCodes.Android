@@ -25,6 +25,7 @@
     <string name="defaultAlphabet">0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
 
     <!-- Results -->
+    <string name="generatedURL">Generated URL</string>
     <string name="resultingURLPlaceholder">Resulting URL…</string>
     <string name="qrCodeDescription">QR code of the resulting URL</string>
     <string name="resultingURLCopied">URL copied to the clipboard</string>
