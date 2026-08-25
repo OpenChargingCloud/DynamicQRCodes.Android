@@ -29,7 +29,7 @@
     <string name="resultingURLPlaceholder">Resulting URL…</string>
     <string name="qrCodeDescription">QR code of the resulting URL</string>
     <string name="resultingURLCopied">URL copied to the clipboard</string>
-    <string name="remainingValidity">Remaining validity</string>
+    <string name="remainingValidity">Remaining validity time</string>
     <!-- "s" is the SI symbol for second and does not pluralise. -->
     <string name="remainingSeconds">%1$d s</string>
 
