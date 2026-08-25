@@ -34,7 +34,7 @@
     <string name="remainingSeconds">%1$d s</string>
 
     <!-- QR code scanner -->
-    <string name="scanQRCode">Scan QR Code</string>
+    <string name="scanQRCode">Scan and Validate QR-Code</string>
     <string name="scanQRCodePrompt">Scan a QR code</string>
     <string name="scanCancelled">Cancelled</string>
     <string name="scanCameraUnavailable">The camera could not be started</string>
