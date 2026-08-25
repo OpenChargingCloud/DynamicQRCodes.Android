@@ -228,17 +228,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Put [text] on the clipboard and confirm it with [confirmation] - except
-     * on Android 13 and up, which shows a confirmation of its own and would
-     * otherwise be saying it twice.
+     * Put [text] on the clipboard and confirm it with [confirmation].
      */
     private fun copyToClipboard(text: CharSequence, @StringRes confirmation: Int) {
 
         getSystemService(ClipboardManager::class.java)
             .setPrimaryClip(ClipData.newPlainText(getString(R.string.app_name), text))
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
-            Toast.makeText(this, confirmation, Toast.LENGTH_SHORT).show()
+        // This used to stay quiet from Android 13 onwards, on the promise that
+        // the system shows a confirmation of every copy itself. It does not do
+        // so on every build - an API 36 emulator shows nothing at all - and a
+        // copy that nobody can see is indistinguishable from a long press that
+        // missed. So the app says it, always. On a device that does show its
+        // own, the cost is hearing it twice; the other way round the cost is a
+        // gesture that looks broken.
+        Toast.makeText(this, confirmation, Toast.LENGTH_SHORT).show()
 
     }
 
