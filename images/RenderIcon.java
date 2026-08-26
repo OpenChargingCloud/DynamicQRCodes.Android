@@ -33,7 +33,11 @@ import java.nio.file.Path;
  *   java images/RenderIcon.java
  *
  * Adaptive layers use a 108 dp canvas and keep the complete logo inside the
- * guaranteed 66 dp safe zone. Store and legacy assets use the 75% keyline.
+ * guaranteed 66 dp safe zone. Store assets use the 75% keyline.
+ *
+ * No legacy ic_launcher.png / ic_launcher_round.png any more. minSdk is 31, so
+ * every device resolves @mipmap/ic_launcher to the adaptive icon and those
+ * squares were never drawn - see the commit that removed them.
  */
 public class RenderIcon {
 
@@ -42,14 +46,14 @@ public class RenderIcon {
 
     private static final Color BACKGROUND = Color.WHITE;
 
-    private record Density(String directory, int legacySize, int adaptiveSize) { }
+    private record Density(String directory, int adaptiveSize) { }
 
     private static final Density[] DENSITIES = {
-        new Density("mipmap-mdpi",     48, 108),
-        new Density("mipmap-hdpi",     72, 162),
-        new Density("mipmap-xhdpi",    96, 216),
-        new Density("mipmap-xxhdpi",  144, 324),
-        new Density("mipmap-xxxhdpi", 192, 432)
+        new Density("mipmap-mdpi",    108),
+        new Density("mipmap-hdpi",    162),
+        new Density("mipmap-xhdpi",   216),
+        new Density("mipmap-xxhdpi",  324),
+        new Density("mipmap-xxxhdpi", 432)
     };
 
     public static void main(String[] args) throws Exception {
@@ -74,13 +78,6 @@ public class RenderIcon {
 
             write(directory.resolve("ic_launcher_foreground.png"), foreground);
             write(directory.resolve("ic_launcher_monochrome.png"), monochrome(foreground));
-
-            write(directory.resolve("ic_launcher.png"),
-                  renderColor(source, visible, density.legacySize(), 0.75,
-                              Background.SQUARE));
-            write(directory.resolve("ic_launcher_round.png"),
-                  renderColor(source, visible, density.legacySize(), 0.75,
-                              Background.CIRCLE));
         }
 
         System.out.printf("Source alpha bounds: %d,%d .. %d,%d%n",
@@ -88,7 +85,7 @@ public class RenderIcon {
         System.out.println("Launcher and store icon assets regenerated.");
     }
 
-    private enum Background { TRANSPARENT, SQUARE, CIRCLE }
+    private enum Background { TRANSPARENT, SQUARE }
 
     private record Bounds(int left, int top, int right, int bottom) {
         int width()  { return right  - left + 1; }
@@ -130,10 +127,6 @@ public class RenderIcon {
         if (background == Background.SQUARE) {
             g.setColor(BACKGROUND);
             g.fillRect(0, 0, size, size);
-        }
-        else if (background == Background.CIRCLE) {
-            g.setColor(BACKGROUND);
-            g.fillOval(0, 0, size, size);
         }
 
         // Transparent pixels around the shield must reveal the icon
